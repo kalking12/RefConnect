@@ -1,0 +1,53 @@
+# Project TODO
+
+- [x] Inspect the supplied Excel workbooks and identify the five approved active hospitals plus the inactive hospital list.
+- [x] Define database tables for hospitals, surgery types, weighted capability criteria, patient profiles, and referral handoffs.
+- [x] Implement backend weighted-readiness calculations with automatic surgery-category grouping.
+- [x] Build role-based permissions so only administrators can update hospital capability records.
+- [x] Create the spreadsheet-style administrator portal for capability updates and readiness previews.
+- [x] Create the patient-facing visual dashboard with colour-coded hospital readiness summaries.
+- [x] Add hospital comparison for up to three active hospitals and detailed category breakdowns.
+- [x] Add stored patient profiles and a referral confirmation flow that passes pre-registered information to the selected hospital.
+- [x] Display approximately 100 provided inactive hospitals as greyed-out, non-interactive records for visual scale.
+- [x] Add unit coverage for scoring, data access rules, and referral validation.
+- [x] Verify responsive layouts and finish the showcase-ready interface.
+- [x] Select Dala National Orthophedic Hospital from the supplied directory as the fifth editable showcase hospital and apply clearly marked illustrative capabilities that preserve realistic care tiers.
+- [x] Persist the four surgery-type records and 32 weighted capability criteria used by the readiness engine.
+- [x] Extend the comparison tray with a side-by-side weighted capability breakdown for selected hospitals.
+- [x] Store a profile snapshot with each prepared referral handoff and validate both profile and destination eligibility.
+- [x] Add automated coverage for regular-user administrator rejection and malformed or ineligible referral requests.
+- [x] Add a persistent dark-mode control and accessible dark visual treatment to the patient and administrator portals.
+- [x] Rename the visible website brand and application title to RefConnect.
+- [x] Replace the Kano header descriptor with Universal Referral Network.
+- [x] Add distinct Doctor Portal and Administrator Portal actions to the public header.
+- [x] Keep Doctor Portal and Administrator Portal controls persistently visible across both interfaces.
+- [x] Rename the Readiness Ledger navigation label to Admin Portal and remove redundant clinical-validation copy.
+- [x] Display each selected active hospital’s full name followed by its acronym in brackets.
+- [x] Add at least ten clinically relevant weighted capability factors to the readiness model and administrator interface.
+- [x] Add all 50 supplied procedures, organised under their stated specialties, to the readiness catalogue.
+- [x] Define and persist a distinct normalized capability-weight profile for every procedure.
+- [x] Update doctor discovery, comparison, and referral selection to work across the full procedure catalogue.
+- [x] Verify all 50 procedures calculate a readiness score for each active hospital.
+- [x] Correct dark-mode contrast for specialty-selector controls introduced with the 50-procedure catalogue.
+- [x] Add automated cross-specialty coverage for comparison and referral procedure selection.
+- [x] Verify every active hospital receives a valid readiness score for all 50 active procedures.
+- [x] Move procedure discovery into a Doctor Portal workflow with a searchable, collapsible specialty list.
+- [x] Rank active referral destinations by readiness for the selected procedure and expose readiness-led selection.
+- [x] Let doctors prepare a stored-profile referral from the selected procedure and destination in one workflow.
+- [x] Integrate RefConnect’s Nigeria mission, Africa vision, coordination role, and digital-referral description into the Doctor Portal narrative.
+- [x] Add service, doctor-to-doctor connection, and provider-benefit content without obscuring the referral workflow.
+- [x] Add RefConnect’s supplied hotline numbers, email, website, legal copy, and policies to the Doctor Portal footer.
+- [x] Correct dark-mode contrast for the new mission, vision, service, and contact content cards.
+- [x] Remove the redundant Open Doctor Portal hero button, showcase-institutions note, and hero metrics section.
+- [x] Remove redundant procedure-search copy, make the hospital-selection workflow lead the Doctor Portal, and rename its label to Best Fit Hospital.
+- [x] Add subtle accessible scroll-reveal and hover motion across the public Doctor Portal.
+- [x] Add a consistent hover-scale animation to interactive buttons.
+- [x] Extend the hover-scale treatment to button-styled links and verify consistent coverage in both Doctor and Administrator portals.
+- [x] Profile and optimize public-portal scrolling performance while preserving accessible motion cues.
+- [x] Integrate the four supplied clinical photographs into the RefConnect public portal with responsive, performance-conscious placement.
+- [x] Replace the RefConnect icon with the supplied logo and reposition enhanced clinical photography as responsive header and portal-side backgrounds.
+- [x] Create a concise investor pitch deck using the supplied 7–10-slide RefConnect framework.
+- [x] Add the supplied clinician image to the Doctor Portal procedure-discovery area without obscuring the procedure finder.
+- [x] Verify Administrator Portal access for osinusikalid@gmail.com; afesojayeruth5522@gmail.com access request cancelled by the owner.
+- [x] Preserve existing user roles during sign-in so assigned administrators retain portal access.
+- [x] Review Stacstart hackathon tracks and prepare a RefConnect-aligned application and pitch checklist.
