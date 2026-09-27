@@ -3,7 +3,7 @@ services:
     name: refconnect
     runtime: node
     plan: free
-    buildCommand: npm install --global pnpm@11.25.0 && pnpm install --frozen-lockfile --prod=false && pnpm build
+    buildCommand: npm install --global pnpm@11.25.0 && pnpm install --frozen-lockfile --prod=false && pnpm db:migrate && pnpm build
     startCommand: NODE_ENV=production node dist/index.js
     healthCheckPath: /healthz
     envVars:
