@@ -1,0 +1,1 @@
+CREATE INDEX `patientProfiles_ownerUserId_idx` ON `patientProfiles` (`ownerUserId`);

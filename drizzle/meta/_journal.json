@@ -1,0 +1,69 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1786646576244,
+      "tag": "0000_tricky_norrin_radd",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1786647561880,
+      "tag": "0001_bizarre_hulk",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1786647709429,
+      "tag": "0002_curious_jack_murdock",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1786648139037,
+      "tag": "0003_bitter_medusa",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1786657049646,
+      "tag": "0004_concerned_talon",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1790196055263,
+      "tag": "0005_living_luke_cage",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1790196423426,
+      "tag": "0006_late_redwing",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1790198731567,
+      "tag": "0007_tense_prodigy",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1790496459471,
+      "tag": "0008_superb_anthem",
+      "breakpoints": true
+    }
+  ]
+}

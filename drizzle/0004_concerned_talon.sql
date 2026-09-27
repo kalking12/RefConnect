@@ -1,0 +1,1 @@
+ALTER TABLE `surgeryTypes` ADD `specialty` varchar(96) DEFAULT 'Unspecified' NOT NULL;

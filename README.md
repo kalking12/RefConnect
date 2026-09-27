@@ -1,0 +1,122 @@
+# RefConnect
+
+RefConnect is a full-stack hospital-readiness and referral portal. Verified Google accounts sign in before viewing hospital readiness or referral workflows. The initial administrator and permanent owner is `osinusikalid@gmail.com`.
+
+This build is a demonstration. The five active hospitals start with
+illustrative capability scores, the wider directory is inactive, and the
+shared referral profile is a non-clinical sample. The server rejects a real
+patient profile paired with an illustrative destination. Real referrals need
+verified hospital readiness data and a separate approval workflow before this
+can be used for clinical operations.
+
+New prepared referral rows keep the profile ID, destination, and procedure but
+do not copy the patient's name, reference, or condition into the legacy
+`profileSnapshot` column; it receives empty JSON. Existing database rows are
+unchanged and may contain older snapshots. Set a retention and deletion policy
+before importing or using real patient records.
+
+For independent hosting with Render and Aiven MySQL, follow [the deployment and data migration guide](DEPLOY_RENDER_AIVEN.md). The source still uses the original React/Vite/Express layout; it no longer needs Manus services at runtime.
+
+## Local setup
+
+Use Node.js 22+ and pnpm 11.25+.
+
+```bash
+pnpm install
+cp env.example .env.local
+```
+
+Fill in the database URL, Google client ID, and a new random JWT secret in
+`.env.local`, then create the database tables and start the site:
+
+```bash
+pnpm db:push
+pnpm dev
+```
+
+Open the URL printed by the server, normally:
+
+```text
+http://localhost:3000
+```
+
+Server process variables take precedence over `.env.local`, then `.env`.
+Set the Google client ID in both server and browser variables, and authorize
+your site's origin for that client in Google Cloud.
+
+### Environment variables
+
+- `DATABASE_URL` — MySQL connection string. Required for persistent users, profiles, referrals, and admin changes.
+- `DB_CA_CERT` — Aiven MySQL CA certificate (PEM) to verify the encrypted database connection. Set in both migration and web service environments.
+- `JWT_SECRET` — unique random server-side secret of at least 32 bytes. The placeholder in `env.example` is rejected.
+- `GOOGLE_CLIENT_ID` — server-side Google OAuth client ID.
+- `VITE_GOOGLE_CLIENT_ID` — the same Google client ID exposed to the browser for Google Identity Services.
+- `APP_ORIGIN` — canonical site origin (for example `https://example.com`, with no path) for production sign-in and state-changing API requests. It must match the address users actually open.
+- `DEV_ALLOWED_HOSTS` — optional comma-separated hostnames for remote development previews; local hosts work without it.
+- `GOOGLE_SHEET_WEBHOOK_URL` and `GOOGLE_SHEET_WEBHOOK_SECRET` — optional private activity sheet. Only the event and role are logged. See `apps-script/README.md` for setup.
+
+Google sign-in uses the Google Identity Services credential flow and a seven-day application session cookie. Only Google accounts with a verified email (`email_verified: true`) can sign in. Session cookies use `SameSite=Lax` and are marked `Secure` in production.
+
+The initial administrator is `osinusikalid@gmail.com` (see `ADMIN_EMAIL` in `shared/const.ts`). Other verified Google accounts start with the regular user role. The owner can promote registered, verified Google accounts to administrator and revoke their administrator role in the Admin portal. New administrators can edit hospital capability values and profiles but cannot grant roles; the owner account cannot be demoted through the app. An account must complete its first Google sign-in before it can appear in the owner's user list. Role changes are stored in MySQL and checked on each authenticated server request. The nullable `adminApprovedAt` column requires migration `0008_superb_anthem.sql` before this version runs against an existing database; old non-owner admin flags alone do not grant access.
+Google accounts start fresh: a matching email on an older Manus account does
+not transfer that account's patient profiles or referral history.
+The first verified Google sign-in creates the user's RefConnect account
+automatically; the same button handles later sign-ins. Signed-out visitors see
+a non-interactive visual preview of the homepage behind the account prompt.
+The real homepage, patient profiles, hospital values, and referral actions do
+not mount or load until the session has been verified.
+
+On the first opening of a browser tab, a short RefConnect welcome animation
+plays over the sign-in screen or dashboard. It can be skipped and does not
+repeat during that tab's session. Reduced-motion users go directly to the
+site. The animation does not change the Google sign-in requirement.
+
+## Site photography
+
+The home page and signed-out visual preview use the same public fictional
+clinician photo, delivered as WebP with a PNG fallback under
+`client/public/preview/`. It contains no hospital or patient records. The
+`/images` path is reserved for signed-in imagery and is protected by the
+server, but this version ships no files under it. The regenerated RefConnect
+logo and square symbol are local PNGs under `client/public/brand/`; the mark
+also has a WebP version. These are public so they appear on the sign-in screen.
+The browser tab uses a small
+code-native SVG favicon in the same folder.
+
+## Interface
+
+The doctor portal has one path from search and procedure selection to hospital
+comparison and referral preparation. The inactive hospital directory is
+collapsed until requested. The administrator portal uses explicit capability
+levels, a hospital profile editor that keeps unsaved drafts when changing
+hospitals, and owner-only account role management. Navigation is available in
+the header or sidebar according to screen size. Data load failures and empty
+lists are shown directly in the relevant screen.
+
+The app shows an offline notice and retries read requests once. A stalled
+read request times out after 90 seconds so its screen can show a retry option.
+Sign-in, current hospital data, and saving changes require a connection.
+Writes are not automatically retried or stopped after a client timeout: the
+server may have saved them even if the reply was lost. If a referral or
+administrator change cannot be confirmed, verify its status before trying
+again. Patient and referral information is not cached for offline use.
+
+## Android APK integration
+
+This repository builds a website, not an Android package. If packaging the
+deployed site as an APK, use an HTTPS browser-based shell such as a Trusted Web
+Activity and test Google sign-in on the actual devices. An embedded Android
+WebView is not supported for Google's sign-in flow. A Trusted Web Activity
+also needs a site-to-app Digital Asset Links association configured for the
+APK's package name and signing certificate. See [the deployment guide](DEPLOY_RENDER_AIVEN.md#android-apk-wrapper)
+for the production checklist.
+
+## Checks
+
+```bash
+pnpm check
+pnpm test
+pnpm build
+```
+
+Keep `pnpm-lock.yaml` with the project for reproducible installs.

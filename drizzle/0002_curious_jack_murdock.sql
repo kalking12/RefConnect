@@ -1,0 +1,1 @@
+ALTER TABLE `hospitals` ADD `description` text;
