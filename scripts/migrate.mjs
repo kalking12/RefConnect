@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { config } from "dotenv";
 import { createPool } from "mysql2/promise";
 import { drizzle } from "drizzle-orm/mysql2";
@@ -106,10 +106,63 @@ async function repairDatabase() {
   }
 }
 
+// Last line of defence: migrations can be recorded as applied without their
+// changes being in the database (an imported history, a hand-edited or empty
+// migration file). The newest snapshot describes the schema the code expects,
+// so compare it with the real tables and ADD any missing column. This only
+// ever adds, and only when that is safe: the column must be nullable or have
+// a default. It never drops, renames or alters anything that already exists.
+function latestSnapshot() {
+  const files = readdirSync("./drizzle/meta").filter((name) => /^\d+_snapshot\.json$/.test(name)).sort();
+  if (files.length === 0) return null;
+  return JSON.parse(readFileSync(`./drizzle/meta/${files[files.length - 1]}`, "utf8"));
+}
+
+function columnDefinition(column) {
+  let sql = `\`${column.name}\` ${column.type}`;
+  if (column.notNull) sql += " NOT NULL";
+  if (column.default !== undefined) sql += ` DEFAULT ${String(column.default)}`;
+  if (column.onUpdate) sql += " ON UPDATE CURRENT_TIMESTAMP";
+  return sql;
+}
+
+async function reconcileColumns() {
+  const snapshot = latestSnapshot();
+  if (!snapshot) return;
+
+  const [tableRows] = await pool.query("SHOW TABLES");
+  const tables = new Set(tableRows.map((row) => Object.values(row)[0]));
+  let added = 0;
+
+  for (const table of Object.values(snapshot.tables)) {
+    if (!tables.has(table.name)) {
+      console.warn(`Schema check: table \`${table.name}\` is expected but missing. It is not created automatically.`);
+      continue;
+    }
+    const [columns] = await pool.query(`SHOW COLUMNS FROM \`${table.name}\``);
+    const have = new Set(columns.map((column) => column.Field));
+
+    for (const column of Object.values(table.columns)) {
+      if (have.has(column.name)) continue;
+      const safeToAdd = !column.primaryKey && !column.autoincrement && (!column.notNull || column.default !== undefined);
+      if (!safeToAdd) {
+        console.warn(`Schema check: \`${table.name}\`.\`${column.name}\` is missing but cannot be added safely (NOT NULL without a default). Skipped.`);
+        continue;
+      }
+      console.warn(`Schema check: \`${table.name}\`.\`${column.name}\` is missing. Adding it.`);
+      await pool.query(`ALTER TABLE \`${table.name}\` ADD ${columnDefinition(column)}`);
+      added += 1;
+    }
+  }
+
+  console.log(added ? `Schema check: added ${added} missing column(s).` : "Schema check: all expected columns are present.");
+}
+
 try {
   await repairDatabase();
   console.log("Applying migrations...");
   await migrate(drizzle(pool), { migrationsFolder: "./drizzle" });
+  await reconcileColumns();
   console.log("Migrations applied successfully.");
   process.exit(0);
 } catch (error) {
