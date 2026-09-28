@@ -29,7 +29,7 @@ import BrandMark from "./BrandMark";
 import { ThemeToggle } from "./ThemeToggle";
 
 const menuItems = [
-  { icon: Stethoscope, label: "Find a hospital", path: "/" },
+  { icon: Stethoscope, label: "Hospital search", path: "/search" },
   { icon: ClipboardList, label: "Admin portal", path: "/admin" },
 ];
 

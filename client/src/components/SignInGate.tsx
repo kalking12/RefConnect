@@ -1,6 +1,8 @@
 import GoogleLoginButton from "@/components/GoogleLoginButton";
 import { Button } from "@/components/ui/button";
+import { SURGERY_TYPES } from "@shared/readiness";
 import { Building2, LoaderCircle, ShieldCheck } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import { BrandLockup } from "./BrandMark";
 
 type SignInGateProps = {
@@ -10,8 +12,14 @@ type SignInGateProps = {
   onRetry?: () => void;
 };
 
-/** A visual-only preview. Authenticated pages and their data hooks are never mounted here. */
-function PublicAppPreview() {
+/** A visual-only preview. Protected data hooks are never mounted here. */
+function PublicAppPreview({
+  isAdmin,
+  procedure,
+}: {
+  isAdmin: boolean;
+  procedure: (typeof SURGERY_TYPES)[number];
+}) {
   return (
     <div className="auth-preview" inert aria-hidden="true">
       <div className="auth-preview__nav">
@@ -38,9 +46,21 @@ function PublicAppPreview() {
             <ShieldCheck size={15} /> Capability-led referral decisions
           </span>
           <h2>
-            Find a hospital by <em>procedure.</em>
+            {isAdmin ? (
+              <>
+                Manage hospital <em>readiness.</em>
+              </>
+            ) : (
+              <>
+                Find a hospital by <em>procedure.</em>
+              </>
+            )}
           </h2>
-          <p>Review recorded capabilities before preparing a referral.</p>
+          <p>
+            {isAdmin
+              ? "Update capabilities and manage access after administrator sign-in."
+              : "Review recorded capabilities before preparing a referral."}
+          </p>
         </div>
       </div>
 
@@ -48,26 +68,37 @@ function PublicAppPreview() {
         <div className="auth-preview__finder">
           <div className="auth-preview__procedure-pane">
             <span className="auth-preview__section-label">
-              Procedure finder
+              {isAdmin ? "Administrator workspace" : "Procedure finder"}
             </span>
-            <h3>Choose a procedure</h3>
+            <h3>
+              {isAdmin ? "Hospital capabilities" : "Your selected procedure"}
+            </h3>
             <div className="auth-preview__procedure-group">
-              <span>Cardiac &amp; Vascular</span>
-              <p>Coronary Artery Bypass Grafting</p>
-              <p>Aortic Valve Replacement</p>
+              <span>{isAdmin ? "Access controlled" : procedure.specialty}</span>
+              <p>
+                {isAdmin
+                  ? "Administrator access is granted by an existing administrator."
+                  : procedure.name}
+              </p>
             </div>
           </div>
           <div className="auth-preview__result-pane">
             <span className="auth-preview__section-label">
-              Selected procedure
+              {isAdmin ? "Role management" : "Hospital readiness"}
             </span>
-            <h3>Coronary Artery Bypass Grafting</h3>
+            <h3>{isAdmin ? "Authorized changes" : procedure.name}</h3>
             <p>
-              Compare active hospitals by recorded readiness and capabilities.
+              {isAdmin
+                ? "Edit hospital information and administrator roles after your access is verified."
+                : "Compare active hospitals by recorded readiness and capabilities."}
             </p>
             <div className="auth-preview__result-detail">
               <Building2 size={20} aria-hidden="true" />
-              <span>Hospital results available after sign-in</span>
+              <span>
+                {isAdmin
+                  ? "Admin workspace available after sign-in"
+                  : "Hospital results available after sign-in"}
+              </span>
             </div>
           </div>
         </div>
@@ -82,9 +113,18 @@ export default function SignInGate({
   offline = false,
   onRetry,
 }: SignInGateProps) {
+  const [location] = useLocation();
+  const isAdmin = location === "/admin";
+  const requestedProcedure = new URLSearchParams(window.location.search).get(
+    "procedure"
+  );
+  const procedure =
+    SURGERY_TYPES.find(item => item.id === requestedProcedure) ??
+    SURGERY_TYPES[0];
+
   return (
     <main className="investor-auth-shell auth-screen relative isolate min-h-screen overflow-hidden text-[#173d36]">
-      <PublicAppPreview />
+      <PublicAppPreview isAdmin={isAdmin} procedure={procedure} />
       <div className="auth-screen__veil" aria-hidden="true" />
       <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-10 sm:px-6 lg:justify-end lg:pr-[min(9vw,9rem)]">
         <div className="auth-screen__dialog w-full max-w-[460px] rounded-[2rem] border border-[#d9e8e2] bg-white p-7 shadow-[0_36px_100px_-32px_rgba(13,60,51,.4)] sm:p-10">
@@ -93,12 +133,18 @@ export default function SignInGate({
             <ShieldCheck className="h-6 w-6" aria-hidden="true" />
           </div>
           <h1 className="mt-5 font-display text-[25px] leading-tight sm:text-[28px]">
-            {offline ? "Reconnect to continue" : "Sign in or create an account"}
+            {offline
+              ? "Reconnect to continue"
+              : isAdmin
+                ? "Sign in to manage RefConnect"
+                : "Sign in to view hospital readiness"}
           </h1>
           <p className="mt-3 text-sm leading-6 text-[#526e65]">
             {offline
               ? "We can’t check your session while offline. This page will continue automatically when you reconnect."
-              : "Continue with Google. Your RefConnect account is created automatically on your first sign-in."}
+              : isAdmin
+                ? "Continue with a verified Google account. An existing administrator must grant you administrator access before you can make changes."
+                : `Continue with Google to compare hospitals for ${procedure.name}. Your account is created on your first sign-in, and this procedure stays selected.`}
           </p>
           <div className="mt-7" aria-live="polite">
             {offline ? (
@@ -132,6 +178,12 @@ export default function SignInGate({
               <GoogleLoginButton />
             )}
           </div>
+          <Link
+            href={isAdmin ? "/" : "/#find"}
+            className="mt-7 inline-flex min-h-11 items-center text-sm font-semibold text-[#0b746b] hover:underline"
+          >
+            {isAdmin ? "Back to RefConnect" : "Back to surgery finder"}
+          </Link>
         </div>
       </div>
     </main>

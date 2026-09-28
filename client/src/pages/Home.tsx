@@ -30,9 +30,7 @@ import {
   Check,
   CircleAlert,
   ClipboardCheck,
-  Mail,
   MapPin,
-  Phone,
   Search,
   SlidersHorizontal,
   Stethoscope,
@@ -81,6 +79,13 @@ const ILLUSTRATIVE_REFERRAL_MESSAGE =
   "This hospital uses demonstration readiness data. Use a demo profile for a demo referral, or choose a hospital with verified data for a real profile.";
 const UNCERTAIN_REFERRAL_MESSAGE =
   "We could not confirm whether this record was saved. Ask an administrator to check it before trying again.";
+
+function procedureFromUrl() {
+  const id = new URLSearchParams(window.location.search).get("procedure");
+  return (
+    SURGERY_TYPES.find(procedure => procedure.id === id) ?? SURGERY_TYPES[0]
+  );
+}
 
 function ReadinessRing({
   score,
@@ -140,7 +145,7 @@ function ReadinessRing({
         className="absolute inset-0 flex flex-col items-center justify-center"
         aria-hidden="true"
       >
-        <span className="font-mono text-base font-medium text-[#1d3a35]">
+        <span className="font-[Poppins] text-base font-bold text-[#1d3a35]">
           {score === null ? "—" : `${score}%`}
         </span>
       </div>
@@ -332,7 +337,7 @@ function ComparisonBar({
                 </button>
               </div>
               <div className="mt-3 flex items-center gap-3">
-                <span className="font-mono text-xl text-[#173d36]">
+                <span className="font-[Poppins] text-xl font-bold text-[#173d36]">
                   {score === null ? "—" : `${score}%`}
                 </span>
                 {score !== null && (
@@ -438,11 +443,11 @@ export default function Home() {
   const profilesQuery = trpc.showcase.profiles.useQuery();
   const referralMutation = trpc.showcase.createReferral.useMutation();
   const [selectedSurgery, setSelectedSurgery] = useState<string>(
-    SURGERY_TYPES[0].id
+    () => procedureFromUrl().id
   );
   const [procedureSearch, setProcedureSearch] = useState("");
-  const [openSpecialties, setOpenSpecialties] = useState<string[]>([
-    SURGERY_TYPES[0].specialty,
+  const [openSpecialties, setOpenSpecialties] = useState<string[]>(() => [
+    procedureFromUrl().specialty,
   ]);
   const [comparisonIds, setComparisonIds] = useState<string[]>([]);
   const [referralHospital, setReferralHospital] = useState<Hospital | null>(
@@ -523,6 +528,22 @@ export default function Home() {
       setOpenSpecialties(proceduresBySpecialty.map(group => group.specialty));
   }, [normalizedSearch, proceduresBySpecialty]);
 
+  // A direct link survives Google sign-in's full reload. Browser history can
+  // also change just the query string while this page remains mounted.
+  useEffect(() => {
+    const restoreProcedure = () => {
+      const procedure = procedureFromUrl();
+      setSelectedSurgery(procedure.id);
+      setOpenSpecialties(current =>
+        current.includes(procedure.specialty)
+          ? current
+          : [...current, procedure.specialty]
+      );
+    };
+    window.addEventListener("popstate", restoreProcedure);
+    return () => window.removeEventListener("popstate", restoreProcedure);
+  }, []);
+
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 20);
     onScroll();
@@ -559,6 +580,9 @@ export default function Home() {
     const procedure = SURGERY_TYPES.find(item => item.id === procedureId);
     if (!procedure) return;
     setSelectedSurgery(procedure.id);
+    const url = new URL(window.location.href);
+    url.searchParams.set("procedure", procedure.id);
+    window.history.replaceState(window.history.state, "", url);
     setOpenSpecialties(current =>
       current.includes(procedure.specialty)
         ? current
@@ -631,13 +655,13 @@ export default function Home() {
         className={`investor-nav sticky top-0 z-30 border-b border-[#dfe9e5]/80 bg-[#f6faf8]/90 ${isScrolled ? "nav-scrolled" : ""}`}
       >
         <div className="container flex min-h-[74px] flex-wrap items-center justify-between gap-2 py-2 sm:flex-nowrap">
-          <a
-            href="#doctor-portal"
-            aria-label="RefConnect, hospital search"
+          <Link
+            href="/"
+            aria-label="RefConnect introduction"
             className="shrink-0"
           >
             <BrandLockup className="h-11 w-[145px] sm:w-[180px]" />
-          </a>
+          </Link>
           <nav
             aria-label="Page sections"
             className="hidden items-center gap-5 text-xs font-bold text-[#45675e] lg:flex"
@@ -950,45 +974,19 @@ export default function Home() {
               </p>
             </div>
             <div className="rounded-2xl border border-[#d4e3dd] bg-white p-5">
-              <h2 className="text-sm font-bold text-[#28564a]">Contact</h2>
-              <div className="mt-4 grid gap-3 text-sm text-[#42665d]">
-                <a
-                  href="tel:+2348080047449"
-                  className="flex min-h-11 items-center gap-2 hover:text-[#0b746b]"
-                >
-                  <Phone className="h-4 w-4 text-[#0b746b]" />
-                  +234 808 004 7449
-                </a>
-                <a
-                  href="mailto:refconnectkano@gmail.com"
-                  className="flex min-h-11 items-center gap-2 hover:text-[#0b746b]"
-                >
-                  <Mail className="h-4 w-4 text-[#0b746b]" />
-                  refconnectkano@gmail.com
-                </a>
-                <details className="text-sm text-[#526e65]">
-                  <summary className="min-h-11 cursor-pointer py-2 font-semibold">
-                    More phone numbers
-                  </summary>
-                  <div className="mt-2 grid gap-2 pl-2">
-                    {[
-                      "+234 802 064 6210",
-                      "+234 813 051 5349",
-                      "+234 811 034 9859",
-                      "+234 706 170 6659",
-                      "+234 903 288 4983",
-                    ].map(number => (
-                      <a
-                        key={number}
-                        href={`tel:+${number.replace(/\D/g, "")}`}
-                        className="inline-flex min-h-11 items-center hover:text-[#0b746b]"
-                      >
-                        {number}
-                      </a>
-                    ))}
-                  </div>
-                </details>
-              </div>
+              <h2 className="text-sm font-bold text-[#28564a]">
+                About RefConnect
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-[#42665d]">
+                See how the referral planning workflow works and meet the team.
+              </p>
+              <Link
+                href="/#about"
+                className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[#0b746b] hover:underline"
+              >
+                Visit About RefConnect
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
             </div>
           </div>
         </footer>

@@ -309,7 +309,7 @@ function AdminBody() {
           href="/"
           className="mt-6 inline-flex min-h-11 items-center rounded-full bg-[#0b746b] px-5 text-sm font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0b746b] focus-visible:ring-offset-2"
         >
-          Find a hospital
+          Browse RefConnect
         </Link>
       </div>
     );

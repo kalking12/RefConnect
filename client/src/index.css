@@ -100,7 +100,9 @@
 @layer base {
   * { @apply border-border outline-ring/50; }
   html { scroll-behavior: smooth; scroll-padding-top: 5rem; }
-  body { @apply bg-background text-foreground; font-family: "Manrope", sans-serif; }
+  body { @apply bg-background text-foreground; font-family: "Inter", sans-serif; font-weight: 400; }
+  h1, h2, h3, h4, h5, h6 { font-family: "Poppins", "Inter", sans-serif; font-weight: 600; }
+  button, [role="button"] { font-family: "Poppins", "Inter", sans-serif; }
   button:not(:disabled), a[href], select:not(:disabled), textarea:not(:disabled), input:not(:disabled) { @apply cursor-pointer; }
   :is(button, a[href], input, select, textarea, [tabindex]):focus-visible {
     outline: 2px solid var(--ring);
@@ -111,7 +113,7 @@
 @layer components {
   .container { width: 100%; margin-inline: auto; padding-inline: 1rem; }
   .flex { min-height: 0; min-width: 0; }
-  .font-display { font-family: "Unbounded", "Manrope", sans-serif; font-weight: 500; }
+  .font-display { font-family: "Poppins", "Inter", sans-serif; font-weight: 600; }
   .font-mono { font-family: "DM Mono", monospace; }
   .surface-shadow { box-shadow: 0 16px 40px -28px rgba(13, 60, 51, 0.34); }
   .mesh-bg { background-image: radial-gradient(circle at 10% 5%, rgba(140, 218, 193, 0.25), transparent 28rem), radial-gradient(circle at 95% 15%, rgba(207, 183, 112, 0.15), transparent 26rem); }
@@ -260,7 +262,7 @@
   overflow: hidden;
   color: #f2fbf7;
   background: radial-gradient(circle at 50% 44%, #125047 0%, #0b302c 38%, #071e1d 100%);
-  animation: welcome-dissolve 1900ms linear both;
+  animation: welcome-dissolve 4500ms ease-in-out both;
 }
 .welcome-intro::before {
   position: absolute;
@@ -300,7 +302,7 @@
   border-radius: 50%;
   background: radial-gradient(circle, rgba(78, 221, 169, .16), rgba(78, 221, 169, .03) 52%, transparent 70%);
   transform: translate(-50%, -50%) scale(.65);
-  animation: welcome-halo 1100ms ease-out 150ms both;
+  animation: welcome-halo 1800ms ease-out 450ms both;
 }
 .welcome-intro__path { display: block; width: min(84vw, 560px); height: auto; margin: 0 auto -2.5rem; overflow: visible; }
 .welcome-intro__guide { stroke: rgba(184, 242, 214, .12); stroke-width: 1; }
@@ -311,7 +313,7 @@
   filter: drop-shadow(0 0 8px rgba(104, 242, 174, .65));
   stroke-dasharray: 520;
   stroke-dashoffset: 520;
-  animation: welcome-draw 950ms cubic-bezier(.22, 1, .36, 1) 170ms both;
+  animation: welcome-draw 1350ms cubic-bezier(.22, 1, .36, 1) 520ms both;
 }
 .welcome-intro__node {
   fill: #bdf8d6;
@@ -322,16 +324,16 @@
   transform-origin: center;
   animation: welcome-node 380ms ease-out both;
 }
-.welcome-intro__node--first { animation-delay: 120ms; }
-.welcome-intro__node--center { animation-delay: 530ms; }
-.welcome-intro__node--last { animation-delay: 960ms; }
+.welcome-intro__node--first { animation-delay: 510ms; }
+.welcome-intro__node--center { animation-delay: 1090ms; }
+.welcome-intro__node--last { animation-delay: 1770ms; }
 .welcome-intro__eyebrow {
   color: #a7d6c2;
   font-size: .68rem;
   font-weight: 700;
   letter-spacing: .25em;
   text-transform: uppercase;
-  animation: welcome-rise 500ms ease-out 500ms both;
+  animation: welcome-rise 600ms ease-out 1430ms both;
 }
 .welcome-intro__brand {
   position: relative;
@@ -343,7 +345,7 @@
   border-radius: 1.75rem;
   background: #f8fbf7;
   box-shadow: 0 24px 70px -35px rgba(0, 0, 0, .65);
-  animation: welcome-rise 550ms cubic-bezier(.22, 1, .36, 1) 630ms both;
+  animation: welcome-rise 750ms cubic-bezier(.22, 1, .36, 1) 1750ms both;
 }
 .welcome-intro__brand img {
   position: absolute;
@@ -359,13 +361,13 @@
   color: #b9d8cc;
   font-size: clamp(.85rem, 2vw, 1rem);
   letter-spacing: .03em;
-  animation: welcome-rise 450ms ease-out 850ms both;
+  animation: welcome-rise 650ms ease-out 2200ms both;
 }
 @keyframes welcome-draw { to { stroke-dashoffset: 0; } }
 @keyframes welcome-node { from { opacity: 0; transform: scale(.3); } to { opacity: 1; transform: scale(1); } }
 @keyframes welcome-rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes welcome-halo { to { transform: translate(-50%, -50%) scale(1); } }
-@keyframes welcome-dissolve { 0%, 79% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes welcome-dissolve { 0%, 73% { opacity: 1; } 100% { opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }

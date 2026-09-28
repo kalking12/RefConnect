@@ -20,8 +20,7 @@ export default function NotFound() {
           Page not found
         </h1>
         <p className="mb-8 text-base leading-relaxed text-[#486a5e]">
-          This page may have moved. Return to the hospital directory to
-          continue.
+          This page may have moved. Return to RefConnect to continue.
         </p>
         <Button
           type="button"
@@ -29,7 +28,7 @@ export default function NotFound() {
           className="min-h-11 bg-[#1b614b] text-white hover:bg-[#154c3c]"
         >
           <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
-          Return to directory
+          Return to RefConnect
         </Button>
       </div>
     </main>

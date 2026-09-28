@@ -3,7 +3,9 @@
 This project is one Node/Express web service serving the Vite site and API, with
 a separate MySQL database. `render.yaml` configures a free Render web service.
 The database export, credentials, and deployed site URL are **not** in this
-archive. The existing Manus data has not been transferred yet.
+archive. The user reports that the current Render/Aiven deployment works
+after running `scripts/migrate.mjs`; this guide also covers a fresh setup or
+restored database. It does not verify the state of that live deployment.
 
 The shipped hospital capability scores are illustrative and the shared
 referral profile is for demonstration. The server blocks real patient profiles
@@ -33,8 +35,9 @@ under a retention and deletion policy before handling real patient data.
 5. Compare table counts in both databases, including `users`, `hospitals`,
    `patientProfiles`, and `referralHandoffs`. Check the schema and migration
    history before applying any project migrations to the restored database.
-   `pnpm db:migrate` runs the existing migrations against `DATABASE_URL`; use
-   it only after confirming which migrations the source database already has.
+   `pnpm db:migrate:verbose` runs `scripts/migrate.mjs` against `DATABASE_URL`
+   and repairs missing tables or simple columns when migration history is
+   inconsistent. Use it only after confirming the restored database state.
 
 Aiven's migration guide: https://aiven.io/docs/products/mysql/howto/migrate-db-to-aiven-via-console
 
@@ -65,8 +68,9 @@ private.
 1. Put the contents of this project folder at the root of a private Git
    repository. Do not commit `.env.local` or database backups.
 2. In Render, create a **Blueprint** from that repository. Render reads
-   `render.yaml`, builds the app, and starts the single web service. It
-   generates `JWT_SECRET` automatically.
+   `render.yaml`, runs the supplied `scripts/migrate.mjs` before building the
+   app, and starts the single web service. It generates `JWT_SECRET`
+   automatically. Keep a backup before any production migration.
 3. When prompted, enter `DATABASE_URL`, `DB_CA_CERT`, `GOOGLE_CLIENT_ID`, and
    `VITE_GOOGLE_CLIENT_ID`. Both Google variables use the same Google OAuth
    **Web application** client ID. `VITE_GOOGLE_CLIENT_ID` must be present for
@@ -77,8 +81,9 @@ private.
    (scheme and hostname, no path; include a non-default port if used) and
    choose **Save, rebuild, and deploy**.
 5. Visit `/healthz` to confirm the process is up; that endpoint does not check
-   the database or Google settings. Then check the welcome, sign-in, verified user access,
-   admin-only portal, the public hero photo, and a restored referral record before
+   the database or Google settings. Then check the 4.5-second welcome, public introduction,
+   procedure finder, sign-in when requesting results, verified user access,
+   admin-only portal, rotating hero photos, and a restored referral record before
    switching traffic away from Manus.
 6. Test the built site at its production address, including a direct visit to
    `/admin` and a page reload there. Confirm an anonymous request to a private

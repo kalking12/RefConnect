@@ -1,5 +1,7 @@
 # RefConnect quality audit — 27 September 2026
 
+**Historical audit:** This scorecard describes the previous signed-out-first interface. The 28 September frontend update replaces the first screen with a public introduction, a public procedure finder, an About/team section, and a 4.5-second welcome. Protected hospital results, referrals, and administration still require verified Google sign-in. See `README.md` for the current flow; the scores below have not been rerun against a deployed site or Android package.
+
 This audit covers the source and a locally built production server. Scores are out of five: **4** means the checked implementation is good with limited remaining verification; **3** means a material gap remains; **2** means the requested setting has not been exercised. Source inspection, automated tests, and HTTP smoke checks cannot prove the deployed Google login, real hospital data, physical mobile experience, or an APK.
 
 | Criterion | Score | Evidence and remaining limit |

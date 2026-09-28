@@ -1,7 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { useAuth } from "@/_core/hooks/useAuth";
 import {
   lazy,
   Suspense,
@@ -10,11 +9,13 @@ import {
   useRef,
   useState,
 } from "react";
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
+import { useAuth } from "@/_core/hooks/useAuth";
 import ErrorBoundary from "./components/ErrorBoundary";
 import SignInGate from "./components/SignInGate";
 import WelcomeIntro from "./components/WelcomeIntro";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import LandingPage from "./pages/LandingPage";
 
 const Home = lazy(() => import("./pages/Home"));
 const AdminPortal = lazy(() => import("./pages/AdminPortal"));
@@ -32,12 +33,61 @@ function shouldShowWelcome() {
   }
 }
 
-function Router() {
+function ProtectedPage({ page }: { page: "search" | "admin" }) {
   const { user, loading, sessionPaused, error, refresh } = useAuth();
-  const [showWelcome, setShowWelcome] = useState(shouldShowWelcome);
   const [offline, setOffline] = useState(() => !navigator.onLine);
+
+  useEffect(() => {
+    const updateConnection = () => setOffline(!navigator.onLine);
+    window.addEventListener("online", updateConnection);
+    window.addEventListener("offline", updateConnection);
+    return () => {
+      window.removeEventListener("online", updateConnection);
+      window.removeEventListener("offline", updateConnection);
+    };
+  }, []);
+
+  const content =
+    (sessionPaused || offline) && !user ? (
+      <SignInGate offline />
+    ) : loading ? (
+      <SignInGate loading />
+    ) : error && !user ? (
+      <SignInGate error onRetry={() => void refresh()} />
+    ) : !user ? (
+      <SignInGate />
+    ) : page === "admin" ? (
+      <AdminPortal />
+    ) : (
+      <Home />
+    );
+
+  return (
+    <>
+      {offline && user && (
+        <div
+          role="status"
+          className="bg-amber-100 px-4 py-2 text-center text-sm font-medium text-amber-950"
+        >
+          You’re offline. Reconnect to load current hospital data or save
+          changes.
+        </div>
+      )}
+      {content}
+    </>
+  );
+}
+
+function Router() {
+  const [location] = useLocation();
+  // The welcome belongs to the first public landing visit. A direct referral
+  // link must show the sign-in prompt immediately, without losing its query.
+  const [showWelcome, setShowWelcome] = useState(
+    () => location === "/" && shouldShowWelcome()
+  );
   const contentRef = useRef<HTMLDivElement>(null);
   const moveFocusAfterWelcome = useRef(false);
+  const welcomeVisible = showWelcome && location === "/";
   const completeWelcome = useCallback(() => {
     moveFocusAfterWelcome.current = Boolean(
       document.activeElement?.closest(".welcome-intro")
@@ -51,17 +101,11 @@ function Router() {
   }, []);
 
   useEffect(() => {
-    const updateConnection = () => setOffline(!navigator.onLine);
-    window.addEventListener("online", updateConnection);
-    window.addEventListener("offline", updateConnection);
-    return () => {
-      window.removeEventListener("online", updateConnection);
-      window.removeEventListener("offline", updateConnection);
-    };
-  }, []);
+    if (location !== "/" && showWelcome) completeWelcome();
+  }, [location, showWelcome, completeWelcome]);
 
   useEffect(() => {
-    if (!showWelcome && moveFocusAfterWelcome.current) {
+    if (!welcomeVisible && moveFocusAfterWelcome.current) {
       moveFocusAfterWelcome.current = false;
       const heading = contentRef.current?.querySelector<HTMLElement>("h1");
       if (heading) {
@@ -71,55 +115,40 @@ function Router() {
         contentRef.current?.focus();
       }
     }
-  }, [showWelcome]);
-
-  const content = (sessionPaused || offline) && !user ? (
-    <SignInGate offline />
-  ) : loading ? (
-    <SignInGate loading />
-  ) : error && !user ? (
-    <SignInGate error onRetry={() => void refresh()} />
-  ) : !user ? (
-    <SignInGate />
-  ) : (
-    <Suspense
-      fallback={
-        <main
-          className="flex min-h-screen items-center justify-center bg-background p-6 text-sm text-muted-foreground"
-          role="status"
-        >
-          Loading RefConnect…
-        </main>
-      }
-    >
-      <Switch>
-        <Route path="/" component={Home} />
-        <Route path="/admin" component={AdminPortal} />
-        <Route path="/404" component={NotFound} />
-        <Route component={NotFound} />
-      </Switch>
-    </Suspense>
-  );
+  }, [welcomeVisible]);
 
   return (
     <>
       <div
         ref={contentRef}
         tabIndex={-1}
-        inert={showWelcome}
-        aria-hidden={showWelcome}
+        inert={welcomeVisible}
+        aria-hidden={welcomeVisible}
       >
-        {offline && user && (
-          <div
-            role="status"
-            className="bg-amber-100 px-4 py-2 text-center text-sm font-medium text-amber-950"
-          >
-            You’re offline. Reconnect to load current hospital data or save changes.
-          </div>
-        )}
-        {content}
+        <Suspense
+          fallback={
+            <main
+              className="flex min-h-screen items-center justify-center bg-background p-6 text-sm text-muted-foreground"
+              role="status"
+            >
+              Loading RefConnect…
+            </main>
+          }
+        >
+          <Switch>
+            <Route path="/" component={LandingPage} />
+            <Route path="/search">
+              <ProtectedPage page="search" />
+            </Route>
+            <Route path="/admin">
+              <ProtectedPage page="admin" />
+            </Route>
+            <Route path="/404" component={NotFound} />
+            <Route component={NotFound} />
+          </Switch>
+        </Suspense>
       </div>
-      {showWelcome && <WelcomeIntro onComplete={completeWelcome} />}
+      {welcomeVisible && <WelcomeIntro onComplete={completeWelcome} />}
     </>
   );
 }

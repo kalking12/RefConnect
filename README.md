@@ -1,6 +1,6 @@
 # RefConnect
 
-RefConnect is a full-stack hospital-readiness and referral portal. Verified Google accounts sign in before viewing hospital readiness or referral workflows. The initial administrator and permanent owner is `osinusikalid@gmail.com`.
+RefConnect is a full-stack hospital-readiness and referral portal. The introduction, procedure finder, and About/team section are public. Selecting a procedure and choosing **View hospitals** opens the secure search: verified Google accounts sign in before viewing hospital readiness or preparing referrals. The initial administrator and permanent owner is `osinusikalid@gmail.com`.
 
 This build is a demonstration. The five active hospitals start with
 illustrative capability scores, the wider directory is inactive, and the
@@ -30,7 +30,7 @@ Fill in the database URL, Google client ID, and a new random JWT secret in
 `.env.local`, then create the database tables and start the site:
 
 ```bash
-pnpm db:push
+pnpm db:migrate:verbose
 pnpm dev
 ```
 
@@ -61,33 +61,39 @@ The initial administrator is `osinusikalid@gmail.com` (see `ADMIN_EMAIL` in `sha
 Google accounts start fresh: a matching email on an older Manus account does
 not transfer that account's patient profiles or referral history.
 The first verified Google sign-in creates the user's RefConnect account
-automatically; the same button handles later sign-ins. Signed-out visitors see
-a non-interactive visual preview of the homepage behind the account prompt.
-The real homepage, patient profiles, hospital values, and referral actions do
-not mount or load until the session has been verified.
+automatically; the same button handles later sign-ins. Visitors can read the
+public introduction, choose a procedure, and read About/team content without
+signing in. Clicking **View hospitals** keeps the selected procedure in the
+URL, opens the sign-in prompt, then shows protected results after sign-in. The
+administrator link similarly prompts for sign-in, with role authorization
+still checked by the server. Patient profiles, hospital values, and referral
+actions do not mount or load for signed-out visitors.
 
-On the first opening of a browser tab, a short RefConnect welcome animation
-plays over the sign-in screen or dashboard. It can be skipped and does not
-repeat during that tab's session. Reduced-motion users go directly to the
-site. The animation does not change the Google sign-in requirement.
+On the first public landing visit in a browser tab, a 4.5-second RefConnect
+welcome animation draws and reveals the brand, then fades into the public
+introduction. It can be skipped and does not repeat during that tab's session.
+Reduced-motion users go directly to the page. A direct secure-search or admin
+link shows its sign-in prompt immediately.
 
 ## Site photography
 
-The home page and signed-out visual preview use the same public fictional
-clinician photo, delivered as WebP with a PNG fallback under
-`client/public/preview/`. It contains no hospital or patient records. The
-`/images` path is reserved for signed-in imagery and is protected by the
-server, but this version ships no files under it. The regenerated RefConnect
-logo and square symbol are local PNGs under `client/public/brand/`; the mark
-also has a WebP version. These are public so they appear on the sign-in screen.
-The browser tab uses a small
-code-native SVG favicon in the same folder.
+The public landing uses optimized clinical photos and five supplied team
+portraits under `client/public/site/`, with a slow hero crossfade and a stable
+About image. The two uncaptioned images showing identifiable patients and the
+image naming a specific hospital were deliberately not used. Confirm consent
+and publishing rights for the selected people and clinical images before
+public deployment. The sign-in preview uses the existing public clinician
+image under `client/public/preview/`; no patient or hospital records are in
+that image. The `/images` path remains reserved for signed-in imagery and is
+protected by the server. RefConnect logo assets are in `client/public/brand/`,
+including a small SVG favicon.
 
 ## Interface
 
-The doctor portal has one path from search and procedure selection to hospital
-comparison and referral preparation. The inactive hospital directory is
-collapsed until requested. The administrator portal uses explicit capability
+The public page flows from introduction to procedure selection to About/team.
+The secure search page shows hospital ranking, comparison, and referral
+preparation after sign-in. Its inactive hospital directory is collapsed until
+requested. The administrator portal uses explicit capability
 levels, a hospital profile editor that keeps unsaved drafts when changing
 hospitals, and owner-only account role management. Navigation is available in
 the header or sidebar according to screen size. Data load failures and empty
