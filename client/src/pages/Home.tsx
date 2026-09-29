@@ -77,14 +77,14 @@ const PORTAL_IMAGES = {
 
 const ILLUSTRATIVE_REFERRAL_MESSAGE =
   "This hospital uses demonstration readiness data. Use a demo profile for a demo referral, or choose a hospital with verified data for a real profile.";
+const RETRY_REFERRAL_MESSAGE =
+  "We could not confirm whether this record was saved. You can try again.";
 const UNCERTAIN_REFERRAL_MESSAGE =
-  "We could not confirm whether this record was saved. Ask an administrator to check it before trying again.";
+  "This still hasn't been confirmed after more than one attempt. Ask an administrator to check it before trying again.";
 
 function procedureFromUrl() {
   const id = new URLSearchParams(window.location.search).get("procedure");
-  return (
-    SURGERY_TYPES.find(procedure => procedure.id === id) ?? SURGERY_TYPES[0]
-  );
+  return SURGERY_TYPES.find(procedure => procedure.id === id) ?? null;
 }
 
 function ReadinessRing({
@@ -249,11 +249,7 @@ function HospitalCard({
             onClick={onRefer}
             className="min-h-11 rounded-full bg-[#0b746b] px-4 text-sm font-bold hover:bg-[#075d57]"
           >
-            {demoReferralUnavailable
-              ? "Review referral options"
-              : isDemonstration
-                ? "Prepare demo referral"
-                : "Prepare referral"}
+            Prepare referral
             <ArrowRight className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
           </Button>
           <Button
@@ -295,7 +291,10 @@ function ComparisonBar({
   const criteria = Object.entries(surgery.weights);
 
   return (
-    <section className="surface-shadow mb-7 rounded-2xl border border-[#c9dfd7] bg-[#f7fcfa] p-4 md:p-5">
+    <section
+      id="comparison-bar"
+      className="surface-shadow mb-7 scroll-mt-24 rounded-2xl border border-[#c9dfd7] bg-[#f7fcfa] p-4 md:p-5"
+    >
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="font-display text-xl text-[#173d36]">
@@ -442,22 +441,31 @@ export default function Home() {
   const hospitalsQuery = trpc.showcase.hospitals.useQuery();
   const profilesQuery = trpc.showcase.profiles.useQuery();
   const referralMutation = trpc.showcase.createReferral.useMutation();
-  const [selectedSurgery, setSelectedSurgery] = useState<string>(
-    () => procedureFromUrl().id
+  const [selectedSurgery, setSelectedSurgery] = useState<string | null>(
+    () => procedureFromUrl()?.id ?? null
   );
   const [procedureSearch, setProcedureSearch] = useState("");
-  const [openSpecialties, setOpenSpecialties] = useState<string[]>(() => [
-    procedureFromUrl().specialty,
-  ]);
+  const [openSpecialties, setOpenSpecialties] = useState<string[]>(() => {
+    const specialty = procedureFromUrl()?.specialty;
+    return specialty ? [specialty] : [];
+  });
+  // A procedure chosen on the landing page arrives here already selected, so
+  // the full picker starts collapsed to avoid asking the user to pick again.
+  // It only starts open when nothing was chosen yet.
+  const [pickerOpen, setPickerOpen] = useState(() => !procedureFromUrl());
   const [comparisonIds, setComparisonIds] = useState<string[]>([]);
   const [referralHospital, setReferralHospital] = useState<Hospital | null>(
     null
   );
   const [selectedProfileId, setSelectedProfileId] = useState("");
   const [referralError, setReferralError] = useState<string | null>(null);
-  const [uncertainReferralKeys, setUncertainReferralKeys] = useState<string[]>(
-    []
-  );
+  // Counts consecutive "could not confirm" failures per profile+hospital+
+  // procedure combination. The first failure lets the user retry; only a
+  // second consecutive failure for the same combination asks them to stop
+  // and involve an administrator instead.
+  const [uncertainReferralCounts, setUncertainReferralCounts] = useState<
+    Record<string, number>
+  >({});
   const [isScrolled, setIsScrolled] = useState(false);
 
   const hospitals = (
@@ -483,16 +491,18 @@ export default function Home() {
     profile && referralHospital
       ? JSON.stringify([profile.id, referralHospital.id, selectedSurgery])
       : null;
-  const referralStatusUnknown =
-    referralKey !== null && uncertainReferralKeys.includes(referralKey);
+  const uncertainReferralAttempts = referralKey
+    ? (uncertainReferralCounts[referralKey] ?? 0)
+    : 0;
+  const referralNeedsAdminCheck = uncertainReferralAttempts >= 2;
   const compared = useMemo(
     () =>
       activeHospitals.filter(hospital => comparisonIds.includes(hospital.id)),
     [activeHospitals, comparisonIds]
   );
-  const surgery =
-    SURGERY_TYPES.find(entry => entry.id === selectedSurgery) ??
-    SURGERY_TYPES[0];
+  const surgery = selectedSurgery
+    ? (SURGERY_TYPES.find(entry => entry.id === selectedSurgery) ?? null)
+    : null;
   const normalizedSearch = procedureSearch.trim().toLowerCase();
   const proceduresBySpecialty = useMemo(
     () =>
@@ -511,15 +521,13 @@ export default function Home() {
   );
   const rankedHospitals = useMemo(
     () =>
-      [...activeHospitals].sort(
-        (a, b) =>
-          (Number.isFinite(b.scores[selectedSurgery])
-            ? b.scores[selectedSurgery]
-            : -1) -
-          (Number.isFinite(a.scores[selectedSurgery])
-            ? a.scores[selectedSurgery]
-            : -1)
-      ),
+      [...activeHospitals].sort((a, b) => {
+        const key = selectedSurgery ?? "";
+        return (
+          (Number.isFinite(b.scores[key]) ? b.scores[key] : -1) -
+          (Number.isFinite(a.scores[key]) ? a.scores[key] : -1)
+        );
+      }),
     [activeHospitals, selectedSurgery]
   );
 
@@ -533,12 +541,14 @@ export default function Home() {
   useEffect(() => {
     const restoreProcedure = () => {
       const procedure = procedureFromUrl();
-      setSelectedSurgery(procedure.id);
-      setOpenSpecialties(current =>
-        current.includes(procedure.specialty)
-          ? current
-          : [...current, procedure.specialty]
-      );
+      setSelectedSurgery(procedure?.id ?? null);
+      if (procedure) {
+        setOpenSpecialties(current =>
+          current.includes(procedure.specialty)
+            ? current
+            : [...current, procedure.specialty]
+        );
+      }
     };
     window.addEventListener("popstate", restoreProcedure);
     return () => window.removeEventListener("popstate", restoreProcedure);
@@ -588,6 +598,7 @@ export default function Home() {
         ? current
         : [...current, procedure.specialty]
     );
+    setPickerOpen(false);
   };
 
   const toggleCompare = (id: string) => {
@@ -603,7 +614,7 @@ export default function Home() {
   };
 
   const completeReferral = async () => {
-    if (!profile || !referralHospital || referralStatusUnknown) return;
+    if (!profile || !referralHospital || !selectedSurgery) return;
     if (blockedReferral) {
       setReferralError(ILLUSTRATIVE_REFERRAL_MESSAGE);
       return;
@@ -620,9 +631,11 @@ export default function Home() {
           : `Referral record prepared for ${referralHospital.shortName ?? referralHospital.name}. Confirm acceptance with the hospital.`
       );
       if (referralKey) {
-        setUncertainReferralKeys(current =>
-          current.filter(item => item !== referralKey)
-        );
+        setUncertainReferralCounts(current => {
+          if (!(referralKey in current)) return current;
+          const { [referralKey]: _removed, ...rest } = current;
+          return rest;
+        });
       }
       setReferralError(null);
       setReferralHospital(null);
@@ -633,12 +646,17 @@ export default function Home() {
       ) {
         setReferralError(ILLUSTRATIVE_REFERRAL_MESSAGE);
       } else {
+        let attempts = uncertainReferralAttempts;
         if (referralKey) {
-          setUncertainReferralKeys(current =>
-            current.includes(referralKey) ? current : [...current, referralKey]
-          );
+          attempts += 1;
+          setUncertainReferralCounts(current => ({
+            ...current,
+            [referralKey]: attempts,
+          }));
         }
-        setReferralError(UNCERTAIN_REFERRAL_MESSAGE);
+        setReferralError(
+          attempts >= 2 ? UNCERTAIN_REFERRAL_MESSAGE : RETRY_REFERRAL_MESSAGE
+        );
       }
     }
   };
@@ -700,6 +718,15 @@ export default function Home() {
         </div>
       </header>
 
+      {comparisonIds.length > 0 && (
+        <a
+          href="#comparison-bar"
+          className="fixed bottom-4 left-4 z-50 inline-flex min-h-11 items-center gap-2 rounded-full bg-[#0b746b] px-4 text-sm font-bold text-white shadow-lg hover:bg-[#075d57]"
+        >
+          <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+          {comparisonIds.length} of 3 compared
+        </a>
+      )}
       <div className="fixed bottom-4 right-4 z-50">
         <ThemeToggle />
       </div>
@@ -744,102 +771,140 @@ export default function Home() {
           </div>
           <div className="mt-5 grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
             <aside className="surface-shadow rounded-2xl border border-[#d8e7e1] bg-white p-4 md:p-5">
-              <label
-                htmlFor="procedure-search"
-                className="text-sm font-bold text-[#28564a]"
-              >
-                Search procedures
-              </label>
-              <div className="relative mt-3">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#526e65]" />
-                <Input
-                  id="procedure-search"
-                  type="search"
-                  value={procedureSearch}
-                  onChange={event => setProcedureSearch(event.target.value)}
-                  placeholder="Name, acronym or specialty"
-                  className="h-11 border-[#cedfd8] bg-[#fbfdfc] pl-10 text-sm"
-                />
-              </div>
-              {normalizedSearch && (
-                <p role="status" className="mt-3 text-sm text-[#526e65]">
-                  {proceduresBySpecialty.reduce(
-                    (count, group) => count + group.procedures.length,
-                    0
-                  )}{" "}
-                  matching procedures
-                </p>
-              )}
-              <Accordion
-                type="multiple"
-                value={openSpecialties}
-                onValueChange={setOpenSpecialties}
-                className="mt-4 border-t border-[#e4eeea]"
-              >
-                {proceduresBySpecialty.map(({ specialty, procedures }) => (
-                  <AccordionItem
-                    key={specialty}
-                    value={specialty}
-                    className="border-b-[#e4eeea]"
+              {pickerOpen ? (
+                <>
+                  <label
+                    htmlFor="procedure-search"
+                    className="text-sm font-bold text-[#28564a]"
                   >
-                    <AccordionTrigger className="min-h-11 py-3 text-left text-sm font-bold text-[#2d584d] hover:no-underline">
-                      <span>{specialty}</span>
-                      <span className="mr-2 rounded-full bg-[#edf6f2] px-2 py-0.5 font-mono text-xs text-[#416b60]">
-                        {procedures.length}
-                      </span>
-                    </AccordionTrigger>
-                    <AccordionContent className="pb-3">
-                      <div className="space-y-1">
-                        {procedures.map(procedure => (
-                          <button
-                            key={procedure.id}
-                            onClick={() => chooseProcedure(procedure.id)}
-                            aria-pressed={selectedSurgery === procedure.id}
-                            className={`min-h-11 w-full rounded-lg px-3 py-2 text-left text-sm leading-5 transition-colors ${selectedSurgery === procedure.id ? "bg-[#0b746b] font-bold text-white" : "text-[#4b6b61] hover:bg-[#eff7f3] hover:text-[#173d36]"}`}
-                          >
-                            <span className="block">{procedure.name}</span>
-                            {procedure.shortName !== procedure.name && (
-                              <span
-                                className={`mt-0.5 block font-mono text-xs ${selectedSurgery === procedure.id ? "text-white/85" : "text-[#526e65]"}`}
+                    Search procedures
+                  </label>
+                  <div className="relative mt-3">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#526e65]" />
+                    <Input
+                      id="procedure-search"
+                      type="search"
+                      value={procedureSearch}
+                      onChange={event => setProcedureSearch(event.target.value)}
+                      placeholder="Name, acronym or specialty"
+                      className="h-11 border-[#cedfd8] bg-[#fbfdfc] pl-10 text-sm"
+                    />
+                  </div>
+                  {normalizedSearch && (
+                    <p role="status" className="mt-3 text-sm text-[#526e65]">
+                      {proceduresBySpecialty.reduce(
+                        (count, group) => count + group.procedures.length,
+                        0
+                      )}{" "}
+                      matching procedures
+                    </p>
+                  )}
+                  <Accordion
+                    type="multiple"
+                    value={openSpecialties}
+                    onValueChange={setOpenSpecialties}
+                    className="mt-4 border-t border-[#e4eeea]"
+                  >
+                    {proceduresBySpecialty.map(({ specialty, procedures }) => (
+                      <AccordionItem
+                        key={specialty}
+                        value={specialty}
+                        className="border-b-[#e4eeea]"
+                      >
+                        <AccordionTrigger className="min-h-11 py-3 text-left text-sm font-bold text-[#2d584d] hover:no-underline">
+                          <span>{specialty}</span>
+                          <span className="mr-2 rounded-full bg-[#edf6f2] px-2 py-0.5 font-mono text-xs text-[#416b60]">
+                            {procedures.length}
+                          </span>
+                        </AccordionTrigger>
+                        <AccordionContent className="pb-3">
+                          <div className="space-y-1">
+                            {procedures.map(procedure => (
+                              <button
+                                key={procedure.id}
+                                onClick={() => chooseProcedure(procedure.id)}
+                                aria-pressed={selectedSurgery === procedure.id}
+                                className={`min-h-11 w-full rounded-lg px-3 py-2 text-left text-sm leading-5 transition-colors ${selectedSurgery === procedure.id ? "bg-[#0b746b] font-bold text-white" : "text-[#4b6b61] hover:bg-[#eff7f3] hover:text-[#173d36]"}`}
                               >
-                                {procedure.shortName}
-                              </span>
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-              {!proceduresBySpecialty.length && (
-                <div className="mt-4 rounded-xl bg-[#f5f8f7] p-4 text-center text-sm text-[#4b6b61]">
-                  No matching procedure. Try a name, acronym or specialty.
+                                <span className="block">{procedure.name}</span>
+                                {procedure.shortName !== procedure.name && (
+                                  <span
+                                    className={`mt-0.5 block font-mono text-xs ${selectedSurgery === procedure.id ? "text-white/85" : "text-[#526e65]"}`}
+                                  >
+                                    {procedure.shortName}
+                                  </span>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                  {!proceduresBySpecialty.length && (
+                    <div className="mt-4 rounded-xl bg-[#f5f8f7] p-4 text-center text-sm text-[#4b6b61]">
+                      No matching procedure. Try a name, acronym or specialty.
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div>
+                  <p className="text-sm font-bold text-[#28564a]">
+                    Procedure
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-[#526e65]">
+                    You already chose a procedure. Change it if you'd like to
+                    see a different list of hospitals.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setPickerOpen(true)}
+                    className="mt-4 inline-flex min-h-11 items-center rounded-full border border-[#cedfd8] bg-[#fbfdfc] px-4 text-sm font-bold text-[#2c5d52] hover:bg-white"
+                  >
+                    Change procedure
+                  </button>
                 </div>
               )}
             </aside>
             <div className="surface-shadow rounded-2xl border border-[#d8e7e1] bg-white p-5 md:p-6">
-              <p className="font-mono text-xs font-bold uppercase tracking-[.08em] text-[#0b746b]">
-                Selected procedure · {surgery.specialty}
-              </p>
-              <h3
-                aria-live="polite"
-                className="mt-2 font-display text-[30px] leading-tight text-[#173d36]"
-              >
-                {surgery.name}
-              </h3>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#526e65]">
-                {surgery.description}
-              </p>
-              {!hospitalsQuery.isLoading && !hospitalsQuery.isError && (
-                <p
-                  role="status"
-                  className="mt-5 rounded-xl border border-[#dbe9e4] bg-[#f7fbf9] p-4 text-sm leading-6 text-[#365e53]"
-                >
-                  {rankedHospitals.length} active{" "}
-                  {rankedHospitals.length === 1 ? "hospital" : "hospitals"}{" "}
-                  available.
-                </p>
+              {surgery ? (
+                <>
+                  <p className="font-mono text-xs font-bold uppercase tracking-[.08em] text-[#0b746b]">
+                    Selected procedure · {surgery.specialty}
+                  </p>
+                  <h3
+                    aria-live="polite"
+                    className="mt-2 font-display text-[30px] leading-tight text-[#173d36]"
+                  >
+                    {surgery.name}
+                  </h3>
+                  <p className="mt-3 max-w-2xl text-sm leading-6 text-[#526e65]">
+                    {surgery.description}
+                  </p>
+                  {!hospitalsQuery.isLoading && !hospitalsQuery.isError && (
+                    <p
+                      role="status"
+                      className="mt-5 rounded-xl border border-[#dbe9e4] bg-[#f7fbf9] p-4 text-sm leading-6 text-[#365e53]"
+                    >
+                      {rankedHospitals.length} active{" "}
+                      {rankedHospitals.length === 1 ? "hospital" : "hospitals"}{" "}
+                      available.
+                    </p>
+                  )}
+                </>
+              ) : (
+                <div className="flex h-full flex-col items-start justify-center">
+                  <p className="font-mono text-xs font-bold uppercase tracking-[.08em] text-[#0b746b]">
+                    No procedure chosen yet
+                  </p>
+                  <h3 className="mt-2 font-display text-[26px] leading-tight text-[#173d36]">
+                    Choose a procedure to see ranked hospitals
+                  </h3>
+                  <p className="mt-3 max-w-2xl text-sm leading-6 text-[#526e65]">
+                    Pick a procedure from the list to compare hospital
+                    readiness for it.
+                  </p>
+                </div>
               )}
             </div>
           </div>
@@ -858,62 +923,68 @@ export default function Home() {
               </button>
             </div>
           )}
-          {!hospitalsQuery.isError &&
-            !hospitalsQuery.isLoading &&
-            rankedHospitals.length === 0 && (
-              <p className="mt-7 rounded-xl border border-[#dbe9e4] bg-white p-5 text-sm text-[#526e65]">
-                No hospitals are active for referral yet.
-              </p>
-            )}
-          <ComparisonBar
-            hospitals={compared}
-            surgeryId={selectedSurgery}
-            onRemove={id =>
-              setComparisonIds(current => current.filter(item => item !== id))
-            }
-          />
-          {hospitalsQuery.isLoading && (
-            <p role="status" className="mt-7 text-sm text-[#365e53]">
-              Loading hospitals…
-            </p>
+          {selectedSurgery && (
+            <>
+              {!hospitalsQuery.isError &&
+                !hospitalsQuery.isLoading &&
+                rankedHospitals.length === 0 && (
+                  <p className="mt-7 rounded-xl border border-[#dbe9e4] bg-white p-5 text-sm text-[#526e65]">
+                    No hospitals are active for referral yet.
+                  </p>
+                )}
+              <ComparisonBar
+                hospitals={compared}
+                surgeryId={selectedSurgery}
+                onRemove={id =>
+                  setComparisonIds(current =>
+                    current.filter(item => item !== id)
+                  )
+                }
+              />
+              {hospitalsQuery.isLoading && (
+                <p role="status" className="mt-7 text-sm text-[#365e53]">
+                  Loading hospitals…
+                </p>
+              )}
+              <div
+                className="mt-7 grid gap-4 xl:grid-cols-2"
+                aria-busy={hospitalsQuery.isLoading}
+              >
+                {hospitalsQuery.isLoading
+                  ? Array.from({ length: 4 }).map((_, index) => (
+                      <div
+                        key={index}
+                        className="h-64 animate-pulse rounded-2xl bg-[#e8f1ed]"
+                        aria-hidden="true"
+                      />
+                    ))
+                  : rankedHospitals.map((hospital, index) => (
+                      <HospitalCard
+                        key={hospital.id}
+                        hospital={hospital}
+                        surgeryId={selectedSurgery}
+                        rank={index + 1}
+                        compared={comparisonIds.includes(hospital.id)}
+                        isDemonstration={
+                          hospital.isIllustrative ||
+                          Boolean(profile?.isDemonstration)
+                        }
+                        demoReferralUnavailable={
+                          hospital.isIllustrative &&
+                          profiles.length > 0 &&
+                          !hasDemoProfile
+                        }
+                        onCompare={() => toggleCompare(hospital.id)}
+                        onRefer={() => {
+                          setReferralError(null);
+                          setSelectedProfileId("");
+                          setReferralHospital(hospital);
+                        }}
+                      />
+                    ))}
+              </div>
+            </>
           )}
-          <div
-            className="mt-7 grid gap-4 xl:grid-cols-2"
-            aria-busy={hospitalsQuery.isLoading}
-          >
-            {hospitalsQuery.isLoading
-              ? Array.from({ length: 4 }).map((_, index) => (
-                  <div
-                    key={index}
-                    className="h-64 animate-pulse rounded-2xl bg-[#e8f1ed]"
-                    aria-hidden="true"
-                  />
-                ))
-              : rankedHospitals.map((hospital, index) => (
-                  <HospitalCard
-                    key={hospital.id}
-                    hospital={hospital}
-                    surgeryId={selectedSurgery}
-                    rank={index + 1}
-                    compared={comparisonIds.includes(hospital.id)}
-                    isDemonstration={
-                      hospital.isIllustrative ||
-                      Boolean(profile?.isDemonstration)
-                    }
-                    demoReferralUnavailable={
-                      hospital.isIllustrative &&
-                      profiles.length > 0 &&
-                      !hasDemoProfile
-                    }
-                    onCompare={() => toggleCompare(hospital.id)}
-                    onRefer={() => {
-                      setReferralError(null);
-                      setSelectedProfileId("");
-                      setReferralHospital(hospital);
-                    }}
-                  />
-                ))}
-          </div>
         </section>
 
         {inactiveHospitals.length > 0 && (
@@ -1008,23 +1079,12 @@ export default function Home() {
               Referral record
             </p>
             <DialogTitle className="font-display text-2xl text-[#173d36]">
-              {referralStatusUnknown
-                ? "Check referral status for "
-                : blockedReferral
-                  ? "Referral unavailable for "
-                  : isDemoReferral
-                    ? "Prepare demo referral for "
-                    : "Prepare referral for "}
+              Prepare referral for{" "}
               {referralHospital?.shortName ?? referralHospital?.name}
             </DialogTitle>
             <DialogDescription className="pt-2 text-sm leading-6 text-[#4e6b61]">
-              {referralStatusUnknown
-                ? "The request may have reached the server."
-                : blockedReferral
-                  ? "Choose a different profile or hospital to continue."
-                  : isDemoReferral
-                    ? "Review the profile and procedure before saving this demonstration record."
-                    : "This saves a record in RefConnect; it does not notify the hospital or confirm acceptance."}
+              This saves a record in RefConnect; it does not notify the
+              hospital or confirm acceptance.
             </DialogDescription>
           </DialogHeader>
           {profiles.length > 1 && !profilesQuery.isError && (
@@ -1094,33 +1154,27 @@ export default function Home() {
               </div>
               <p className="rounded-xl border border-[#dfe9e5] bg-[#f1f8f5] p-3 text-sm leading-6 text-[#4e6b61]">
                 <span className="font-bold text-[#265a4e]">Procedure:</span>{" "}
-                {surgery.name}
+                {surgery?.name}
               </p>
               <Button
                 onClick={completeReferral}
                 disabled={
                   referralMutation.isPending ||
                   blockedReferral ||
-                  referralStatusUnknown
+                  referralNeedsAdminCheck
                 }
                 className="min-h-11 w-full rounded-full bg-[#0b746b] text-sm font-bold hover:bg-[#075d57]"
               >
                 <ClipboardCheck className="mr-2 h-4 w-4" aria-hidden="true" />
                 {referralMutation.isPending
                   ? "Saving referral…"
-                  : referralStatusUnknown
+                  : referralNeedsAdminCheck
                     ? "Awaiting status check"
-                    : blockedReferral
-                      ? "Referral unavailable for this profile"
-                      : isDemoReferral
-                        ? "Create demo referral record"
-                        : "Prepare referral record"}
+                    : "Prepare referral record"}
               </Button>
-              {(referralError || referralStatusUnknown) && (
+              {referralError && (
                 <p role="alert" className="text-sm text-rose-700">
-                  {referralStatusUnknown
-                    ? UNCERTAIN_REFERRAL_MESSAGE
-                    : referralError}
+                  {referralError}
                 </p>
               )}
             </div>
@@ -1133,7 +1187,7 @@ export default function Home() {
                     ? "The referral profile could not load. Check your connection and try again."
                     : profiles.length > 1
                       ? "Choose a referral profile above to continue."
-                      : "No referral profile is available for your account."}
+                      : "No referral profile is available for your account. Ask an administrator to create one for you."}
               </p>
               {profilesQuery.isError && (
                 <Button

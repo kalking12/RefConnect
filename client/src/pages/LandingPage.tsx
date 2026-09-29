@@ -15,11 +15,8 @@ import { Link } from "wouter";
 import "./landing.css";
 
 const TEAM = [
-  { name: "Omobolaji Oluwole", image: "/site/team-omobolaji-oluwole.webp" },
   { name: "Khalid Osinusi", image: "/site/team-khalid-osinusi.webp" },
   { name: "Morayo Akinbile", image: "/site/team-morayo-akinbile.webp" },
-  { name: "Bilyamin Ibrahim", image: "/site/team-bilyamin-ibrahim.webp" },
-  { name: "Ruth Afesojaye", image: "/site/team-ruth-afesojaye.webp" },
 ] as const;
 
 function Finder() {
@@ -250,7 +247,7 @@ export default function LandingPage() {
                   <p className="rc-eyebrow rc-eyebrow--dark"><span className="rc-eyebrow__line" /> The people behind RefConnect</p>
                   <h2 id="rc-team-title">Meet the team.</h2>
                 </div>
-                <p>Five co-founders working toward clearer referral pathways.</p>
+                <p>Two co-founders working toward clearer referral pathways.</p>
               </div>
               <ul className="rc-team__grid">
                 {TEAM.map(person => (
