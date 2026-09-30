@@ -1,17 +1,20 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 // Keep this in sync with the welcome-dissolve animation in index.css.
-const INTRO_DURATION_MS = 4500;
+const INTRO_DURATION_MS = 2500;
 
 type WelcomeIntroProps = {
   onComplete: () => void;
 };
 
 export default function WelcomeIntro({ onComplete }: WelcomeIntroProps) {
+  const skipRef = useRef<HTMLButtonElement>(null);
+
   useEffect(() => {
     const timeout = window.setTimeout(onComplete, INTRO_DURATION_MS);
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    skipRef.current?.focus({ preventScroll: true });
 
     return () => {
       window.clearTimeout(timeout);
@@ -20,8 +23,8 @@ export default function WelcomeIntro({ onComplete }: WelcomeIntroProps) {
   }, [onComplete]);
 
   return (
-    <div className="welcome-intro" aria-label="Welcome to RefConnect">
-      <button className="welcome-intro__skip" type="button" onClick={onComplete}>
+    <div className="welcome-intro" role="dialog" aria-modal="true" aria-label="Welcome to RefConnect">
+      <button ref={skipRef} className="welcome-intro__skip" type="button" onClick={onComplete}>
         Skip intro <span aria-hidden="true">↗</span>
       </button>
 

@@ -1,128 +1,70 @@
 # RefConnect
 
-RefConnect is a full-stack hospital-readiness and referral portal. The introduction, procedure finder, and About/team section are public. Selecting a procedure and choosing **View hospitals** opens the secure search: verified Google accounts sign in before viewing hospital readiness or preparing referrals. The initial administrator and permanent owner is `osinusikalid@gmail.com`.
+RefConnect is a procedure-based hospital readiness and referral demonstration. Visitors can explore the public introduction and choose a procedure. Hospital results, comparisons, and referral preparation require a verified Google account. The administrator portal lets approved administrators maintain capability values; the initial owner, `osinusikalid@gmail.com`, can grant or revoke other administrator roles after those users sign in.
 
-This build is a demonstration. The five active hospitals start with
-illustrative capability scores, the wider directory is inactive, and the
-shared referral profile is a non-clinical sample. The server rejects a real
-patient profile paired with an illustrative destination. Real referrals need
-verified hospital readiness data and a separate approval workflow before this
-can be used for clinical operations.
+**Build period:** 24–30 September 2026 (seven calendar days, inclusive).
 
-New prepared referral rows keep the profile ID, destination, and procedure but
-do not copy the patient's name, reference, or condition into the legacy
-`profileSnapshot` column; it receives empty JSON. Existing database rows are
-unchanged and may contain older snapshots. Set a retention and deletion policy
-before importing or using real patient records.
+## What the demonstration does
 
-For independent hosting with Render and Aiven MySQL, follow [the deployment and data migration guide](DEPLOY_RENDER_AIVEN.md). The source still uses the original React/Vite/Express layout; it no longer needs Manus services at runtime.
+1. Choose a procedure on the public landing page and open ranked hospitals. A direct `/search` visit without a procedure asks for a choice.
+2. Sign in with a Google account whose email is verified. The chosen procedure survives sign-in.
+3. Compare hospitals and prepare a referral from an available profile. If the reply to a referral save is lost, **Try again** reuses the same user-scoped request ID so the server can reconcile the attempt.
+4. Approved administrators edit hospital information and capability levels. Only the owner manages administrator roles. Server checks protect each private request and edit.
 
-## Local setup
+The site has a short, skippable welcome on each fresh page load, including direct secure links (bypassed when reduced motion is requested). Internal navigation does not replay it. After the welcome, direct secure links retain their destination and show the sign-in gate as needed. The landing page has rotating clinical imagery and an About section for the two founders, Khalid Osinusi and Morayo Akinbile.
 
-Use Node.js 22+ and pnpm 11.25+.
+**Demonstration data:** The five active hospitals start with *illustrative*, unverified capability scores; the wider directory is inactive and a shared sample profile is non-clinical. Rankings must not be used as clinical advice or current availability. The server refuses a real patient profile paired with an illustrative hospital. Real referrals require verified hospital data and a separate clinical approval workflow. New prepared handoffs do not duplicate patient details in the legacy `profileSnapshot` column; older stored rows may still contain snapshots. Set retention, deletion, and publishing-consent policies before handling real patient information or publishing the supplied clinical photos.
+
+## Stack and source layout
+
+| Part | Technology / location |
+| --- | --- |
+| Web app | React 19, TypeScript, Vite 7, Tailwind CSS 4 in `client/` |
+| API and access control | Node.js, Express, tRPC, Google Identity Services token verification in `server/` |
+| Data | MySQL, Drizzle ORM schema and migrations in `drizzle/` |
+| Shared logic | Procedure scoring and data contracts in `shared/` |
+| Deployment | One Render web service in `render.yaml`; Aiven MySQL, or a compatible MySQL service, configured externally |
+| Optional activity log | Private Google Sheets webhook in `apps-script/`; the app works without it |
+
+The source preserves the React/Vite/Express project layout inherited from Manus; runtime authentication, images, and data access do not require Manus services. There is no Android APK in this repository.
+
+## Run locally
+
+Use Node.js 22+ and pnpm 11.25.0. A MySQL database and a Google OAuth **Web application** client are required to exercise sign-in and protected data.
 
 ```bash
-pnpm install
+pnpm install --frozen-lockfile
 cp env.example .env.local
-```
-
-Fill in the database URL, Google client ID, and a new random JWT secret in
-`.env.local`, then create the database tables and start the site:
-
-```bash
+# Fill in the variables in .env.local; keep the file private.
 pnpm db:migrate:verbose
 pnpm dev
 ```
 
-Open the URL printed by the server, normally:
+Open the address printed by the server (normally `http://localhost:3000`). Add that origin to the Google client's Authorized JavaScript origins. Production uses the actual HTTPS origin instead. Server process variables take precedence over `.env.local`, then `.env`.
 
-```text
-http://localhost:3000
-```
-
-Server process variables take precedence over `.env.local`, then `.env`.
-Set the Google client ID in both server and browser variables, and authorize
-your site's origin for that client in Google Cloud.
-
-### Environment variables
-
-- `DATABASE_URL` — MySQL connection string. Required for persistent users, profiles, referrals, and admin changes.
-- `DB_CA_CERT` — Aiven MySQL CA certificate (PEM) to verify the encrypted database connection. Set in both migration and web service environments.
-- `JWT_SECRET` — unique random server-side secret of at least 32 bytes. The placeholder in `env.example` is rejected.
-- `GOOGLE_CLIENT_ID` — server-side Google OAuth client ID.
-- `VITE_GOOGLE_CLIENT_ID` — the same Google client ID exposed to the browser for Google Identity Services.
-- `APP_ORIGIN` — canonical site origin (for example `https://example.com`, with no path) for production sign-in and state-changing API requests. It must match the address users actually open.
-- `DEV_ALLOWED_HOSTS` — optional comma-separated hostnames for remote development previews; local hosts work without it.
-- `GOOGLE_SHEET_WEBHOOK_URL` and `GOOGLE_SHEET_WEBHOOK_SECRET` — optional private activity sheet. Only the event and role are logged. See `apps-script/README.md` for setup.
-
-Google sign-in uses the Google Identity Services credential flow and a seven-day application session cookie. Only Google accounts with a verified email (`email_verified: true`) can sign in. Session cookies use `SameSite=Lax` and are marked `Secure` in production.
-
-The initial administrator is `osinusikalid@gmail.com` (see `ADMIN_EMAIL` in `shared/const.ts`). Other verified Google accounts start with the regular user role. The owner can promote registered, verified Google accounts to administrator and revoke their administrator role in the Admin portal. New administrators can edit hospital capability values and profiles but cannot grant roles; the owner account cannot be demoted through the app. An account must complete its first Google sign-in before it can appear in the owner's user list. Role changes are stored in MySQL and checked on each authenticated server request. The nullable `adminApprovedAt` column requires migration `0008_superb_anthem.sql` before this version runs against an existing database; old non-owner admin flags alone do not grant access.
-Google accounts start fresh: a matching email on an older Manus account does
-not transfer that account's patient profiles or referral history.
-The first verified Google sign-in creates the user's RefConnect account
-automatically; the same button handles later sign-ins. Visitors can read the
-public introduction, choose a procedure, and read About/team content without
-signing in. Clicking **View hospitals** keeps the selected procedure in the
-URL, opens the sign-in prompt, then shows protected results after sign-in. The
-administrator link similarly prompts for sign-in, with role authorization
-still checked by the server. Patient profiles, hospital values, and referral
-actions do not mount or load for signed-out visitors.
-
-On the first public landing visit in a browser tab, a 4.5-second RefConnect
-welcome animation draws and reveals the brand, then fades into the public
-introduction. It can be skipped and does not repeat during that tab's session.
-Reduced-motion users go directly to the page. A direct secure-search or admin
-link shows its sign-in prompt immediately.
-
-## Site photography
-
-The public landing uses optimized clinical photos and five supplied team
-portraits under `client/public/site/`, with a slow hero crossfade and a stable
-About image. The two uncaptioned images showing identifiable patients and the
-image naming a specific hospital were deliberately not used. Confirm consent
-and publishing rights for the selected people and clinical images before
-public deployment. The sign-in preview uses the existing public clinician
-image under `client/public/preview/`; no patient or hospital records are in
-that image. The `/images` path remains reserved for signed-in imagery and is
-protected by the server. RefConnect logo assets are in `client/public/brand/`,
-including a small SVG favicon.
-
-## Interface
-
-The public page flows from introduction to procedure selection to About/team.
-The secure search page shows hospital ranking, comparison, and referral
-preparation after sign-in. Its inactive hospital directory is collapsed until
-requested. The administrator portal uses explicit capability
-levels, a hospital profile editor that keeps unsaved drafts when changing
-hospitals, and owner-only account role management. Navigation is available in
-the header or sidebar according to screen size. Data load failures and empty
-lists are shown directly in the relevant screen.
-
-The app shows an offline notice and retries read requests once. A stalled
-read request times out after 90 seconds so its screen can show a retry option.
-Sign-in, current hospital data, and saving changes require a connection.
-Writes are not automatically retried or stopped after a client timeout: the
-server may have saved them even if the reply was lost. If a referral or
-administrator change cannot be confirmed, verify its status before trying
-again. Patient and referral information is not cached for offline use.
-
-## Android APK integration
-
-This repository builds a website, not an Android package. If packaging the
-deployed site as an APK, use an HTTPS browser-based shell such as a Trusted Web
-Activity and test Google sign-in on the actual devices. An embedded Android
-WebView is not supported for Google's sign-in flow. A Trusted Web Activity
-also needs a site-to-app Digital Asset Links association configured for the
-APK's package name and signing certificate. See [the deployment guide](DEPLOY_RENDER_AIVEN.md#android-apk-wrapper)
-for the production checklist.
-
-## Checks
+Required settings are `DATABASE_URL`, `JWT_SECRET` (a new random secret of at least 32 bytes), `GOOGLE_CLIENT_ID`, and `VITE_GOOGLE_CLIENT_ID` (the same browser-visible client ID). Use `DB_CA_CERT` to verify Aiven TLS. Set `APP_ORIGIN` to the exact production origin to restrict sign-in and state-changing requests; `DEV_ALLOWED_HOSTS` is optional for remote development previews. `env.example` lists the optional Sheets webhook variables. Never commit `.env.local` or a database export.
 
 ```bash
 pnpm check
 pnpm test
 pnpm build
+pnpm start
 ```
 
-Keep `pnpm-lock.yaml` with the project for reproducible installs.
+The build output is generated under `dist/`; it is excluded from source. Keep `pnpm-lock.yaml` for reproducible installs. The production process serves the site and API together; `/healthz` checks that the process responds, not that MySQL or Google sign-in works.
+
+## Deploy and submit
+
+Follow [the Render and Aiven guide](DEPLOY_RENDER_AIVEN.md) for migrations, environment variables, Google origin configuration, and deployment checks. Submit the actual details below through the submission form; the links and complete team details are not present in this source archive.
+
+| Submission field | Supply from |
+| --- | --- |
+| Team details | Confirmed entrant names, roles, and contact details |
+| Deployed/live URL | The final HTTPS site origin after Render deployment |
+| GitHub repository | The repository URL after pushing this source |
+| Demo video | The shareable URL of the completed three-minute recording |
+| Tech stack | The stack table above |
+
+In the video, show the landing procedure finder, verified sign-in, ranked results/comparison, a demonstration referral, and owner/admin controls. State clearly that capability values are illustrative.
+
+Before submitting, verify the published HTTPS site and direct `/search` and `/admin` routes, sign-in as a verified regular user and an approved admin, and a database-backed read and save. The local build and unit tests do not establish that the live Render/Aiven environment or an Android wrapper works. A browser-based Android Trusted Web Activity needs its own device and Google sign-in checks; see the deployment guide.

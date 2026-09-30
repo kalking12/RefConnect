@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Route, Switch, useLocation } from "wouter";
+import { Route, Switch } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import ErrorBoundary from "./components/ErrorBoundary";
 import SignInGate from "./components/SignInGate";
@@ -20,16 +20,12 @@ import LandingPage from "./pages/LandingPage";
 const Home = lazy(() => import("./pages/Home"));
 const AdminPortal = lazy(() => import("./pages/AdminPortal"));
 
-const WELCOME_SEEN_KEY = "refconnect-welcome-seen";
-
 function shouldShowWelcome() {
   try {
-    return (
-      !window.matchMedia("(prefers-reduced-motion: reduce)").matches &&
-      window.sessionStorage.getItem(WELCOME_SEEN_KEY) !== "1"
-    );
+    return !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   } catch {
-    return false;
+    // A missing media-query API must not silently suppress the introduction.
+    return true;
   }
 }
 
@@ -73,36 +69,24 @@ function ProtectedPage({ page }: { page: "search" | "admin" }) {
           changes.
         </div>
       )}
-      {content}
+      <div className="protected-page">{content}</div>
     </>
   );
 }
 
 function Router() {
-  const [location] = useLocation();
-  // The welcome belongs to the first public landing visit. A direct referral
-  // link must show the sign-in prompt immediately, without losing its query.
-  const [showWelcome, setShowWelcome] = useState(
-    () => location === "/" && shouldShowWelcome()
-  );
+  // Every fresh document load gets the brief welcome, including direct links.
+  // Client-side navigation does not restart it or discard a query string.
+  const [showWelcome, setShowWelcome] = useState(shouldShowWelcome);
   const contentRef = useRef<HTMLDivElement>(null);
   const moveFocusAfterWelcome = useRef(false);
-  const welcomeVisible = showWelcome && location === "/";
+  const welcomeVisible = showWelcome;
   const completeWelcome = useCallback(() => {
     moveFocusAfterWelcome.current = Boolean(
       document.activeElement?.closest(".welcome-intro")
     );
-    try {
-      window.sessionStorage.setItem(WELCOME_SEEN_KEY, "1");
-    } catch {
-      // Storage can be disabled; the current visit can still continue.
-    }
     setShowWelcome(false);
   }, []);
-
-  useEffect(() => {
-    if (location !== "/" && showWelcome) completeWelcome();
-  }, [location, showWelcome, completeWelcome]);
 
   useEffect(() => {
     if (!welcomeVisible && moveFocusAfterWelcome.current) {
@@ -110,9 +94,9 @@ function Router() {
       const heading = contentRef.current?.querySelector<HTMLElement>("h1");
       if (heading) {
         heading.tabIndex = -1;
-        heading.focus();
+        heading.focus({ preventScroll: true });
       } else {
-        contentRef.current?.focus();
+        contentRef.current?.focus({ preventScroll: true });
       }
     }
   }, [welcomeVisible]);

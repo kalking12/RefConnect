@@ -1,4 +1,6 @@
 import { and, count, eq, inArray, isNotNull, or, sql } from "drizzle-orm";
+import { createHash } from "node:crypto";
+import { TRPCError } from "@trpc/server";
 import { drizzle, type MySql2Database } from "drizzle-orm/mysql2";
 import { createPool } from "mysql2/promise";
 import { nanoid } from "nanoid";
@@ -331,9 +333,10 @@ export function buildPreparedReferralInsert(
   profile: Pick<typeof patientProfiles.$inferSelect, "id" | "sourceHospitalId">,
   destinationHospitalId: number,
   surgeryTypeId: string,
+  id = nanoid(),
 ) {
   return {
-    id: nanoid(),
+    id,
     profileId: profile.id,
     sourceHospitalId: profile.sourceHospitalId,
     destinationHospitalId,
@@ -346,16 +349,70 @@ export function buildPreparedReferralInsert(
   };
 }
 
-export async function createReferral(profileId: string, destinationExternalId: string, surgeryTypeId: string, userId: number) {
+// The browser keeps a UUID for an attempt and resends it when a response is
+// lost. Scope it to the authenticated user; the existing primary key then
+// gives us an atomic idempotency constraint without a new table/column.
+export function referralHandoffId(userId: number, requestId: string): string {
+  const digest = createHash("sha256").update(`referral-handoff:v1:${userId}:${requestId.toLowerCase()}`).digest("hex");
+  return `ref_${digest}`;
+}
+
+type ExistingReferral = {
+  id: string;
+  profileId: string;
+  destinationHospitalId: string | null;
+  surgeryTypeId: string;
+  status: "prepared" | "sent" | "accepted";
+};
+
+export function reconcileReferral(existing: ExistingReferral, input: {
+  profileId: string;
+  destinationHospitalId: string;
+  surgeryTypeId: string;
+}) {
+  if (existing.profileId !== input.profileId || existing.destinationHospitalId !== input.destinationHospitalId || existing.surgeryTypeId !== input.surgeryTypeId) {
+    throw new TRPCError({ code: "CONFLICT", message: "This referral attempt was already used for another selection. Choose the profile, hospital, and procedure again." });
+  }
+  return { id: existing.id, status: existing.status };
+}
+
+export async function createReferral(profileId: string, destinationExternalId: string, surgeryTypeId: string, userId: number, requestId: string) {
   const db = await getDb();
   if (!db) throw new Error("Database is unavailable. Referral handoff could not be prepared.");
+  const id = referralHandoffId(userId, requestId);
+  const input = { profileId, destinationHospitalId: destinationExternalId, surgeryTypeId };
+  const findExisting = async () => (await db.select({
+    id: referralHandoffs.id,
+    profileId: referralHandoffs.profileId,
+    destinationHospitalId: hospitals.externalId,
+    surgeryTypeId: referralHandoffs.surgeryTypeId,
+    status: referralHandoffs.status,
+  }).from(referralHandoffs).leftJoin(hospitals, eq(referralHandoffs.destinationHospitalId, hospitals.id)).where(eq(referralHandoffs.id, id)).limit(1))[0];
+
+  // Reconcile first, so a committed write is recoverable even if the profile
+  // or destination became inactive before the browser retried.
+  const existing = await findExisting();
+  if (existing) return reconcileReferral(existing, input);
   await ensureShowcaseData();
   const profile = (await db.select().from(patientProfiles).where(and(eq(patientProfiles.id, profileId), eq(patientProfiles.active, true), or(eq(patientProfiles.isDemonstration, true), eq(patientProfiles.ownerUserId, userId)))).limit(1))[0];
   const destination = (await db.select().from(hospitals).where(eq(hospitals.externalId, destinationExternalId)).limit(1))[0];
   const procedure = (await db.select().from(surgeryTypes).where(eq(surgeryTypes.externalId, surgeryTypeId)).limit(1))[0];
-  validateReferralEligibility(profile, destination);
-  validateReferralProcedure(procedure && { id: procedure.externalId, active: procedure.active });
-  const handoff = buildPreparedReferralInsert(profile, destination.id, surgeryTypeId);
-  await db.insert(referralHandoffs).values(handoff);
-  return { id: handoff.id, status: handoff.status };
+  try {
+    validateReferralEligibility(profile, destination);
+    validateReferralProcedure(procedure && { id: procedure.externalId, active: procedure.active });
+  } catch (error) {
+    // A rejected selection is definitive. Mark it as a client error so the
+    // dialog can ask for a new choice rather than suggesting an uncertain save.
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: error instanceof Error ? error.message : "The referral selection is unavailable.",
+    });
+  }
+  const handoff = buildPreparedReferralInsert(profile, destination.id, surgeryTypeId, id);
+  // A simultaneous retry can win the insert race. The duplicate becomes a
+  // no-op, after which both requests read and validate the committed row.
+  await db.insert(referralHandoffs).values(handoff).onDuplicateKeyUpdate({ set: { id } });
+  const committed = await findExisting();
+  if (!committed) throw new Error("Referral status could not be confirmed. Try again with the same request.");
+  return reconcileReferral(committed, input);
 }

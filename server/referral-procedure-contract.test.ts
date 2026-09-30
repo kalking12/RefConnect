@@ -28,13 +28,15 @@ describe("cross-specialty referral procedure contract", () => {
     const caller = appRouter.createCaller(userContext());
     const selectedProcedures = ["cabg", "whipple-procedure", "brain-tumor-surgery", "hip-replacement", "kidney-transplant", "caesarean-section", "tracheostomy"];
 
-    for (const surgeryTypeId of selectedProcedures) {
-      await expect(caller.showcase.createReferral({ profileId: "showcase-referral-profile", destinationHospitalId: "akth", surgeryTypeId })).resolves.toEqual({ id: "prepared-referral", status: "prepared" });
+    for (const [index, surgeryTypeId] of selectedProcedures.entries()) {
+      const requestId = `00000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`;
+      await expect(caller.showcase.createReferral({ profileId: "showcase-referral-profile", destinationHospitalId: "akth", surgeryTypeId, requestId })).resolves.toEqual({ id: "prepared-referral", status: "prepared" });
     }
 
     expect(mocks.createReferral).toHaveBeenCalledTimes(selectedProcedures.length);
-    selectedProcedures.forEach((surgeryTypeId) => {
-      expect(mocks.createReferral).toHaveBeenCalledWith("showcase-referral-profile", "akth", surgeryTypeId, 41);
+    selectedProcedures.forEach((surgeryTypeId, index) => {
+      const requestId = `00000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`;
+      expect(mocks.createReferral).toHaveBeenCalledWith("showcase-referral-profile", "akth", surgeryTypeId, 41, requestId);
     });
   });
 });

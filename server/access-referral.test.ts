@@ -4,6 +4,8 @@ import { validateReferralEligibility, validateReferralProcedure } from "../share
 import { PROCEDURE_SPECIALTIES, SURGERY_TYPES } from "../shared/readiness";
 import type { TrpcContext } from "./_core/context";
 
+const requestId = "00000000-0000-4000-8000-000000000001";
+
 function contextFor(role: "user" | "admin"): TrpcContext {
   return {
     user: { id: 42, openId: "test-user", googleSub: "sub-42", pictureUrl: null, name: "Test User", email: "test@example.com", loginMethod: "google", role, createdAt: new Date(), updatedAt: new Date(), lastSignedIn: new Date() },
@@ -29,7 +31,7 @@ describe("referral validation", () => {
     const caller = appRouter.createCaller({ user: null, req: {} as TrpcContext["req"], res: {} as TrpcContext["res"] });
     await expect(caller.showcase.hospitals()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
     await expect(caller.showcase.profiles()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
-    await expect(caller.showcase.createReferral({ profileId: "profile-1", destinationHospitalId: "akth", surgeryTypeId: "cancer-surgery" })).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    await expect(caller.showcase.createReferral({ profileId: "profile-1", destinationHospitalId: "akth", surgeryTypeId: "cancer-surgery", requestId })).rejects.toMatchObject({ code: "UNAUTHORIZED" });
   });
 
   it("requires an active stored profile and active destination facility", () => {
@@ -51,14 +53,15 @@ describe("referral validation", () => {
 
   it("rejects malformed referral requests before attempting a handoff", async () => {
     const caller = appRouter.createCaller(contextFor("user"));
-    await expect(caller.showcase.createReferral({ profileId: "", destinationHospitalId: "akth", surgeryTypeId: "cancer-surgery" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(caller.showcase.createReferral({ profileId: "", destinationHospitalId: "akth", surgeryTypeId: "cancer-surgery", requestId })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(caller.showcase.createReferral({ profileId: "profile-1", destinationHospitalId: "akth", surgeryTypeId: "cancer-surgery", requestId: "not-a-uuid" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
   it("does not claim a referral was prepared when the database is unavailable", async () => {
     vi.stubEnv("DATABASE_URL", "");
     try {
       const caller = appRouter.createCaller(contextFor("user"));
-      await expect(caller.showcase.createReferral({ profileId: "showcase-referral-profile", destinationHospitalId: "akth", surgeryTypeId: "cabg" }))
+      await expect(caller.showcase.createReferral({ profileId: "showcase-referral-profile", destinationHospitalId: "akth", surgeryTypeId: "cabg", requestId }))
         .rejects.toThrow("Database is unavailable. Referral handoff could not be prepared.");
     } finally {
       vi.unstubAllEnvs();

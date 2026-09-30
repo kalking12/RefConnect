@@ -1,11 +1,10 @@
 # Move RefConnect to Render and Aiven MySQL
 
 This project is one Node/Express web service serving the Vite site and API, with
-a separate MySQL database. `render.yaml` configures a free Render web service.
+a separate MySQL database. `render.yaml` configures the Render web service.
 The database export, credentials, and deployed site URL are **not** in this
-archive. The user reports that the current Render/Aiven deployment works
-after running `scripts/migrate.mjs`; this guide also covers a fresh setup or
-restored database. It does not verify the state of that live deployment.
+archive. This guide covers a fresh setup or restored database; it does not
+verify the state of a live deployment.
 
 The shipped hospital capability scores are illustrative and the shared
 referral profile is for demonstration. The server blocks real patient profiles
@@ -22,9 +21,9 @@ under a retention and deletion policy before handling real patient data.
 1. Keep the Manus site and database running while you migrate. Obtain a full
    MySQL backup or the database's connection details from your current host.
    Keep the backup private; it may contain patient and referral data.
-2. Create an Aiven for MySQL service on the Free plan. Check that the current
-   database fits the [current free-tier storage limit](https://aiven.io/docs/products/mysql/concepts/mysql-free-tier)
-   before importing it (1 GB as checked in September 2026).
+2. Create an Aiven for MySQL service on the plan you have chosen. Check that the
+   current database fits that plan's [storage limits](https://aiven.io/docs/products/mysql/concepts/mysql-free-tier)
+   before importing it.
 3. If the Manus database is reachable from the public internet, Aiven Console
    > your MySQL service > Service settings > Import database can migrate an
    external MySQL database. Choose its one-time snapshot option if the source
@@ -81,7 +80,7 @@ private.
    (scheme and hostname, no path; include a non-default port if used) and
    choose **Save, rebuild, and deploy**.
 5. Visit `/healthz` to confirm the process is up; that endpoint does not check
-   the database or Google settings. Then check the 4.5-second welcome, public introduction,
+   the database or Google settings. Then check the short welcome on each fresh page load, public introduction,
    procedure finder, sign-in when requesting results, verified user access,
    admin-only portal, rotating hero photos, and a restored referral record before
    switching traffic away from Manus.
@@ -95,8 +94,8 @@ private.
 
 If you change `VITE_GOOGLE_CLIENT_ID`, choose **Save, rebuild, and deploy**:
 Vite embeds that value at build time. Other server-only environment changes
-need a restart or deploy. Render's [free web service](https://render.com/docs/free)
-can spin down after inactivity, so allow for a cold start during testing.
+need a restart or deploy. Allow time for a cold start during testing if the
+chosen Render plan sleeps after inactivity.
 
 Render deployment guide: https://render.com/docs/deploy-node-express-app
 Google setup: https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid
