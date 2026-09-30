@@ -299,15 +299,15 @@ function AdminBody() {
     return (
       <div className="mx-auto flex min-h-[70vh] max-w-xl flex-col items-center justify-center px-6 text-center">
         <LockKeyhole className="h-9 w-9 text-[#b17924]" />
-        <h1 className="mt-5 font-display text-3xl text-[#173d36]">
+        <h1 className="mt-5 font-display text-3xl text-foreground">
           Administrator access required
         </h1>
-        <p className="mt-3 text-sm leading-6 text-[#496b60]">
+        <p className="mt-3 text-sm leading-6 text-muted-foreground">
           An administrator must grant you access to edit hospital details.
         </p>
         <Link
           href="/"
-          className="mt-6 inline-flex min-h-11 items-center rounded-full bg-[#0b746b] px-5 text-sm font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0b746b] focus-visible:ring-offset-2"
+          className="mt-6 inline-flex min-h-11 items-center rounded-full bg-primary px-5 text-sm font-bold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           Browse RefConnect
         </Link>
@@ -325,11 +325,11 @@ function AdminBody() {
             <span className="sr-only">Loading hospital data…</span>
             <div
               aria-hidden="true"
-              className="h-12 w-56 animate-pulse rounded-xl bg-[#e4eee9]"
+              className="h-12 w-56 animate-pulse rounded-xl bg-secondary"
             />
             <div
               aria-hidden="true"
-              className="mt-7 h-[520px] animate-pulse rounded-2xl bg-[#e8f1ed]"
+              className="mt-7 h-[520px] animate-pulse rounded-2xl bg-secondary"
             />
           </>
         )}
@@ -338,10 +338,10 @@ function AdminBody() {
   if (hospitalsQuery.error && !hospitalsQuery.data)
     return (
       <div className="mx-auto max-w-xl p-6">
-        <h1 className="font-display text-2xl text-[#173d36]">
+        <h1 className="font-display text-2xl text-foreground">
           Hospitals could not be loaded
         </h1>
-        <p className="mt-3 text-sm text-[#496b60]">
+        <p className="mt-3 text-sm text-muted-foreground">
           Check your connection and try again.
         </p>
         <Button
@@ -357,17 +357,17 @@ function AdminBody() {
   return (
     <div className="mx-auto max-w-[1560px] p-1 pb-20 md:p-5">
       <header className="mb-6">
-        <h1 className="font-display text-[34px] tracking-[-0.025em] text-[#173d36]">
+        <h1 className="font-display text-[34px] tracking-[-0.025em] text-foreground">
           Admin portal
         </h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-[#496b60]">
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
           Update hospital capabilities and profiles. Saved changes appear in
           hospital search.
         </p>
         {user?.isOwner && (
           <a
             href="#role-management-title"
-            className="mt-3 inline-flex min-h-11 items-center text-sm font-bold text-[#0b746b] underline underline-offset-4"
+            className="mt-3 inline-flex min-h-11 items-center text-sm font-bold text-primary underline underline-offset-4"
           >
             Manage administrators
           </a>
@@ -391,24 +391,24 @@ function AdminBody() {
         </div>
       )}
       {!activeHospitals.length ? (
-        <div className="rounded-2xl border border-[#d7e4df] bg-white p-6 text-sm text-[#496b60]">
+        <div className="rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground">
           No active hospitals are available to edit.
         </div>
       ) : (
         <>
           <section
-            className="surface-shadow overflow-hidden rounded-2xl border border-[#d7e4df] bg-white"
+            className="surface-shadow overflow-hidden rounded-2xl border border-border bg-card"
             aria-labelledby="capability-title"
           >
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e6eeeb] px-5 py-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
               <div>
                 <h2
                   id="capability-title"
-                  className="font-display text-xl text-[#1c4038]"
+                  className="font-display text-xl text-foreground"
                 >
                   Hospital capabilities
                 </h2>
-                <p className="mt-1 text-sm text-[#496b60]">
+                <p className="mt-1 text-sm text-muted-foreground">
                   Choose a level for each capability. These hospital values are
                   demonstration data.
                 </p>
@@ -421,7 +421,7 @@ function AdminBody() {
                   savingLedger ||
                   !!hospitalsQuery.error
                 }
-                className="min-h-11 rounded-full bg-[#0b746b] px-4 text-sm font-bold hover:bg-[#075d57]"
+                className="min-h-11 rounded-full bg-primary px-4 text-sm font-bold hover:bg-primary/90"
               >
                 <Save aria-hidden="true" className="mr-1.5 h-3.5 w-3.5" />
                 {savingLedger
@@ -441,7 +441,7 @@ function AdminBody() {
             )}
             <div className="px-5 py-3 md:hidden">
               <label
-                className="text-sm font-bold text-[#31584e]"
+                className="text-sm font-bold text-foreground"
                 htmlFor="mobile-capability-hospital"
               >
                 Hospital to edit
@@ -450,7 +450,7 @@ function AdminBody() {
                 id="mobile-capability-hospital"
                 value={mobileHospital.id}
                 onChange={event => setMobileHospitalId(event.target.value)}
-                className="mt-2 h-11 w-full rounded-lg border border-[#c5d9d1] bg-white px-3 text-sm text-[#244940] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0b746b]"
+                className="mt-2 h-11 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {activeHospitals.map(hospital => (
                   <option key={hospital.id} value={hospital.id}>
@@ -466,11 +466,11 @@ function AdminBody() {
               tabIndex={0}
             >
               <table className="w-full border-collapse text-left md:min-w-[1120px]">
-                <thead className="bg-[#f2f7f5]">
+                <thead className="bg-secondary">
                   <tr>
                     <th
                       scope="col"
-                      className="sticky left-0 z-20 w-[50%] min-w-[130px] border-b border-r border-[#dde9e5] bg-[#f2f7f5] px-3 py-4 text-sm font-bold text-[#31584e] md:w-auto md:min-w-[230px] md:px-5"
+                      className="sticky left-0 z-20 w-[50%] min-w-[130px] border-b border-r border-border bg-secondary px-3 py-4 text-sm font-bold text-foreground md:w-auto md:min-w-[230px] md:px-5"
                     >
                       Capability
                     </th>
@@ -478,12 +478,12 @@ function AdminBody() {
                       <th
                         scope="col"
                         key={hospital.id}
-                        className={`w-[50%] min-w-[150px] border-b border-[#dde9e5] px-2 py-4 md:w-auto md:min-w-[175px] md:px-4 ${hospital.id !== mobileHospital.id ? "hidden md:table-cell" : ""}`}
+                        className={`w-[50%] min-w-[150px] border-b border-border px-2 py-4 md:w-auto md:min-w-[175px] md:px-4 ${hospital.id !== mobileHospital.id ? "hidden md:table-cell" : ""}`}
                       >
-                        <span className="text-sm font-bold leading-5 text-[#244940]">
+                        <span className="text-sm font-bold leading-5 text-foreground">
                           {hospitalLabel(hospital)}
                         </span>
-                        <span className="mt-1 block text-xs font-normal text-[#496b60]">
+                        <span className="mt-1 block text-xs font-normal text-muted-foreground">
                           {hospital.grade
                             ? `Grade ${hospital.grade}`
                             : hospital.facilityLevel}
@@ -496,16 +496,16 @@ function AdminBody() {
                   {CAPABILITY_DEFINITIONS.map((capability, rowIndex) => (
                     <tr
                       key={capability.key}
-                      className={rowIndex % 2 ? "bg-[#fbfdfc]" : "bg-white"}
+                      className={rowIndex % 2 ? "bg-muted/40" : "bg-card"}
                     >
                       <th
                         scope="row"
-                        className={`sticky left-0 z-10 border-b border-r border-[#edf2ef] px-3 py-3 md:px-5 ${rowIndex % 2 ? "bg-[#fbfdfc]" : "bg-white"}`}
+                        className={`sticky left-0 z-10 border-b border-r border-border px-3 py-3 md:px-5 ${rowIndex % 2 ? "bg-muted/40" : "bg-card"}`}
                       >
-                        <span className="text-sm font-bold text-[#31584e]">
+                        <span className="text-sm font-bold text-foreground">
                           {capability.label}
                         </span>
-                        <span className="mt-0.5 block text-xs text-[#496b60]">
+                        <span className="mt-0.5 block text-xs text-muted-foreground">
                           {capability.group}
                         </span>
                       </th>
@@ -517,7 +517,7 @@ function AdminBody() {
                         return (
                           <td
                             key={hospital.id}
-                            className={`border-b border-[#edf2ef] px-2 py-3 md:px-4 ${hospital.id !== mobileHospital.id ? "hidden md:table-cell" : ""}`}
+                            className={`border-b border-border px-2 py-3 md:px-4 ${hospital.id !== mobileHospital.id ? "hidden md:table-cell" : ""}`}
                           >
                             <select
                               aria-label={`${capability.label} at ${hospitalLabel(hospital)}`}
@@ -535,7 +535,7 @@ function AdminBody() {
                                   },
                                 }))
                               }
-                              className={`min-h-11 w-full cursor-pointer rounded-lg border px-2 py-2 text-sm font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0b746b] disabled:cursor-wait ${levelStyle[value] ?? levelStyle[0]}`}
+                              className={`min-h-11 w-full cursor-pointer rounded-lg border px-2 py-2 text-sm font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait ${levelStyle[value] ?? levelStyle[0]}`}
                             >
                               <option value={0}>{capabilityLabel(0)}</option>
                               <option value={1}>{capabilityLabel(1)}</option>
@@ -552,20 +552,20 @@ function AdminBody() {
           </section>
           <div className="mt-6 grid gap-6 xl:grid-cols-[.8fr_1.2fr]">
             <section
-              className="surface-shadow rounded-2xl border border-[#d7e4df] bg-white p-5"
+              className="surface-shadow rounded-2xl border border-border bg-card p-5"
               aria-labelledby="score-title"
             >
               <h2
                 id="score-title"
-                className="font-display text-2xl text-[#1c4038]"
+                className="font-display text-2xl text-foreground"
               >
                 Readiness scores
               </h2>
-              <p className="mt-1 text-sm leading-5 text-[#496b60]">
+              <p className="mt-1 text-sm leading-5 text-muted-foreground">
                 Scores show saved values. Save capability edits to update them.
               </p>
               <label
-                className="mt-5 block text-sm font-bold text-[#31584e]"
+                className="mt-5 block text-sm font-bold text-foreground"
                 htmlFor="score-procedure"
               >
                 Procedure
@@ -574,7 +574,7 @@ function AdminBody() {
                 id="score-procedure"
                 value={selectedProcedure?.id ?? ""}
                 onChange={event => setSelectedProcedureId(event.target.value)}
-                className="mt-2 h-11 w-full rounded-lg border border-[#c5d9d1] bg-white px-3 text-sm text-[#244940] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0b746b]"
+                className="mt-2 h-11 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {SURGERY_TYPES.map(procedure => (
                   <option key={procedure.id} value={procedure.id}>
@@ -595,13 +595,13 @@ function AdminBody() {
                         ? "text-amber-700"
                         : tier
                           ? "text-rose-700"
-                          : "text-[#496b60]";
+                          : "text-muted-foreground";
                   return (
                     <div
                       key={hospital.id}
-                      className="rounded-lg bg-[#f5f9f7] px-3 py-3"
+                      className="rounded-lg bg-muted/60 px-3 py-3"
                     >
-                      <p className="break-words text-sm font-medium leading-5 text-[#496b60]">
+                      <p className="break-words text-sm font-medium leading-5 text-muted-foreground">
                         {hospital.name}
                       </p>
                       <p className={`mt-2 text-lg font-bold ${color}`}>
@@ -617,12 +617,12 @@ function AdminBody() {
             </section>
             {selectedHospital && profileDraft && (
               <section
-                className="surface-shadow rounded-2xl border border-[#d7e4df] bg-white p-5"
+                className="surface-shadow rounded-2xl border border-border bg-card p-5"
                 aria-labelledby="profile-title"
               >
                 <h2
                   id="profile-title"
-                  className="font-display text-2xl text-[#1c4038]"
+                  className="font-display text-2xl text-foreground"
                 >
                   Hospital profile
                 </h2>
@@ -634,7 +634,7 @@ function AdminBody() {
                   }}
                 >
                   <label
-                    className="mt-5 block text-sm font-bold text-[#31584e]"
+                    className="mt-5 block text-sm font-bold text-foreground"
                     htmlFor="profile-hospital"
                   >
                     Hospital
@@ -646,7 +646,7 @@ function AdminBody() {
                       setSelectedHospitalId(event.target.value)
                     }
                     disabled={savingProfile}
-                    className="mt-2 h-11 w-full rounded-lg border border-[#c5d9d1] bg-white px-3 text-sm text-[#244940] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0b746b]"
+                    className="mt-2 h-11 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     {activeHospitals.map(hospital => (
                       <option key={hospital.id} value={hospital.id}>
@@ -655,7 +655,7 @@ function AdminBody() {
                     ))}
                   </select>
                   <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                    <label className="text-sm font-bold text-[#31584e]">
+                    <label className="text-sm font-bold text-foreground">
                       Resource grade (1 to 5)
                       <Input
                         type="number"
@@ -674,7 +674,7 @@ function AdminBody() {
                             : undefined
                         }
                         disabled={savingProfile}
-                        className="mt-2 h-11 border-[#c5d9d1]"
+                        className="mt-2 h-11 border-input"
                       />
                       {profileErrors.grade && (
                         <span
@@ -685,7 +685,7 @@ function AdminBody() {
                         </span>
                       )}
                     </label>
-                    <label className="text-sm font-bold text-[#31584e]">
+                    <label className="text-sm font-bold text-foreground">
                       Care level
                       <Input
                         name="facilityLevel"
@@ -703,7 +703,7 @@ function AdminBody() {
                             : undefined
                         }
                         disabled={savingProfile}
-                        className="mt-2 h-11 border-[#c5d9d1]"
+                        className="mt-2 h-11 border-input"
                       />
                       {profileErrors.facilityLevel && (
                         <span
@@ -714,7 +714,7 @@ function AdminBody() {
                         </span>
                       )}
                     </label>
-                    <label className="text-sm font-bold text-[#31584e] sm:col-span-2">
+                    <label className="text-sm font-bold text-foreground sm:col-span-2">
                       Ownership
                       <Input
                         name="ownership"
@@ -732,7 +732,7 @@ function AdminBody() {
                             : undefined
                         }
                         disabled={savingProfile}
-                        className="mt-2 h-11 border-[#c5d9d1]"
+                        className="mt-2 h-11 border-input"
                       />
                       {profileErrors.ownership && (
                         <span
@@ -743,7 +743,7 @@ function AdminBody() {
                         </span>
                       )}
                     </label>
-                    <label className="text-sm font-bold text-[#31584e] sm:col-span-2">
+                    <label className="text-sm font-bold text-foreground sm:col-span-2">
                       Description
                       <Textarea
                         name="description"
@@ -761,7 +761,7 @@ function AdminBody() {
                             : undefined
                         }
                         disabled={savingProfile}
-                        className="mt-2 min-h-28 border-[#c5d9d1] text-sm leading-5"
+                        className="mt-2 min-h-28 border-input text-sm leading-5"
                       />
                       {profileErrors.description && (
                         <span
@@ -782,7 +782,7 @@ function AdminBody() {
                     </p>
                   )}
                   <div className="mt-4 flex items-center justify-between gap-3">
-                    <p className="text-sm text-[#496b60]">
+                    <p className="text-sm text-muted-foreground">
                       {hasOtherProfileChanges
                         ? "Edits for other hospitals are kept until you save them."
                         : ""}
@@ -794,7 +794,7 @@ function AdminBody() {
                         savingProfile ||
                         !!hospitalsQuery.error
                       }
-                      className="min-h-11 rounded-full bg-[#173d36] px-4 text-sm font-bold hover:bg-[#0b746b]"
+                      className="min-h-11 rounded-full bg-primary px-4 text-sm font-bold hover:bg-primary/90"
                     >
                       <Save aria-hidden="true" className="mr-1.5 h-3.5 w-3.5" />
                       {savingProfile ? "Saving…" : "Save profile"}

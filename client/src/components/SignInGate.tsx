@@ -18,7 +18,7 @@ function PublicAppPreview({
   procedure,
 }: {
   isAdmin: boolean;
-  procedure: (typeof SURGERY_TYPES)[number];
+  procedure: (typeof SURGERY_TYPES)[number] | null;
 }) {
   return (
     <div className="auth-preview" inert aria-hidden="true">
@@ -74,11 +74,11 @@ function PublicAppPreview({
               {isAdmin ? "Hospital capabilities" : "Your selected procedure"}
             </h3>
             <div className="auth-preview__procedure-group">
-              <span>{isAdmin ? "Access controlled" : procedure.specialty}</span>
+              <span>{isAdmin ? "Access controlled" : procedure?.specialty ?? "Procedure not chosen"}</span>
               <p>
                 {isAdmin
                   ? "Administrator access is granted by an existing administrator."
-                  : procedure.name}
+                  : procedure?.name ?? "Choose a procedure to see ranked hospitals."}
               </p>
             </div>
           </div>
@@ -86,7 +86,7 @@ function PublicAppPreview({
             <span className="auth-preview__section-label">
               {isAdmin ? "Role management" : "Hospital readiness"}
             </span>
-            <h3>{isAdmin ? "Authorized changes" : procedure.name}</h3>
+            <h3>{isAdmin ? "Authorized changes" : procedure?.name ?? "Find hospital readiness"}</h3>
             <p>
               {isAdmin
                 ? "Edit hospital information and administrator roles after your access is verified."
@@ -119,17 +119,16 @@ export default function SignInGate({
     "procedure"
   );
   const procedure =
-    SURGERY_TYPES.find(item => item.id === requestedProcedure) ??
-    SURGERY_TYPES[0];
+    SURGERY_TYPES.find(item => item.id === requestedProcedure) ?? null;
 
   return (
-    <main className="investor-auth-shell auth-screen relative isolate min-h-screen overflow-hidden text-[#173d36]">
+    <main className="investor-auth-shell auth-screen relative isolate min-h-screen overflow-hidden text-[#193449]">
       <PublicAppPreview isAdmin={isAdmin} procedure={procedure} />
       <div className="auth-screen__veil" aria-hidden="true" />
       <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-10 sm:px-6 lg:justify-end lg:pr-[min(9vw,9rem)]">
-        <div className="auth-screen__dialog w-full max-w-[460px] rounded-[2rem] border border-[#d9e8e2] bg-white p-7 shadow-[0_36px_100px_-32px_rgba(13,60,51,.4)] sm:p-10">
+        <div className="auth-screen__dialog w-full max-w-[460px] rounded-[2rem] border border-[#d4e3ed] bg-white p-7 sm:p-10">
           <BrandLockup className="h-16 w-[225px] max-w-full" />
-          <div className="mt-8 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e1f1ea] text-[#0b746b]">
+          <div className="mt-8 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e5f4fd] text-[#086aa9]">
             <ShieldCheck className="h-6 w-6" aria-hidden="true" />
           </div>
           <h1 className="mt-5 font-display text-[25px] leading-tight sm:text-[28px]">
@@ -139,20 +138,22 @@ export default function SignInGate({
                 ? "Sign in to manage RefConnect"
                 : "Sign in to view hospital readiness"}
           </h1>
-          <p className="mt-3 text-sm leading-6 text-[#526e65]">
+          <p className="mt-3 text-sm leading-6 text-[#526b7c]">
             {offline
               ? "We can’t check your session while offline. This page will continue automatically when you reconnect."
               : isAdmin
                 ? "Continue with a verified Google account. An existing administrator must grant you administrator access before you can make changes."
-                : `Continue with Google to compare hospitals for ${procedure.name}. Your account is created on your first sign-in, and this procedure stays selected.`}
+                : procedure
+                  ? `Continue with Google to compare hospitals for ${procedure.name}. Your account is created on your first sign-in, and this procedure stays selected.`
+                  : "Continue with Google to choose a procedure and compare hospital readiness. Your account is created on your first sign-in."}
           </p>
           <div className="mt-7" aria-live="polite">
             {offline ? (
-              <p role="status" className="text-sm text-[#526e65]">
+              <p role="status" className="text-sm text-[#526b7c]">
                 Waiting for a connection…
               </p>
             ) : loading ? (
-              <div className="flex items-center gap-3 text-sm text-[#51746a]">
+              <div className="flex items-center gap-3 text-sm text-[#526b7c]">
                 <LoaderCircle
                   className="h-5 w-5 animate-spin"
                   aria-hidden="true"
@@ -168,7 +169,7 @@ export default function SignInGate({
                   <Button
                     type="button"
                     onClick={onRetry}
-                    className="min-h-11 rounded-full bg-[#0b746b] hover:bg-[#075d57]"
+                    className="min-h-11 rounded-full bg-[#086aa9] text-white hover:bg-[#075684]"
                   >
                     Try again
                   </Button>
@@ -180,7 +181,7 @@ export default function SignInGate({
           </div>
           <Link
             href={isAdmin ? "/" : "/#find"}
-            className="mt-7 inline-flex min-h-11 items-center text-sm font-semibold text-[#0b746b] hover:underline"
+            className="mt-7 inline-flex min-h-11 items-center text-sm font-semibold text-[#086aa9] hover:underline"
           >
             {isAdmin ? "Back to RefConnect" : "Back to surgery finder"}
           </Link>

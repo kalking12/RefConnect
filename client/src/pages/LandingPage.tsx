@@ -139,12 +139,10 @@ function Finder() {
               : "Choose a procedure on the left to continue to the hospital search."}
           </p>
         </div>
-        {selected ? (
+        {selected && (
           <Link className="rc-button rc-button--light rc-finder__go" href={`/search?procedure=${encodeURIComponent(selected.id)}`}>
             View hospitals <ArrowRight size={19} aria-hidden="true" />
           </Link>
-        ) : (
-          <span className="rc-button rc-button--light rc-button--disabled rc-finder__go" aria-disabled="true">View hospitals</span>
         )}
         <p className="rc-finder__privacy"><LockKeyhole size={15} aria-hidden="true" /> Sign in is required for hospital details and referrals.</p>
       </aside>
@@ -185,6 +183,9 @@ export default function LandingPage() {
           <div className="rc-hero__images" aria-hidden="true">
             <div className="rc-hero__image rc-hero__image--first" />
             <div className="rc-hero__image rc-hero__image--second" />
+            <div className="rc-hero__image rc-hero__image--third" />
+            <div className="rc-hero__image rc-hero__image--fourth" />
+            <div className="rc-hero__image rc-hero__image--fifth" />
           </div>
           <div className="rc-hero__scrim" aria-hidden="true" />
           <div className="rc-hero__inner">
@@ -194,7 +195,7 @@ export default function LandingPage() {
               <p className="rc-hero__lead">
                 RefConnect is a referral workflow for clinicians in Nigeria: find a procedure, review facility information and plan the next step with greater clarity.
               </p>
-              <a className="rc-button rc-button--mint" href="#find">Explore procedures <ArrowRight size={19} aria-hidden="true" /></a>
+              <a className="rc-button rc-button--gold" href="#find">Explore procedures <ArrowRight size={19} aria-hidden="true" /></a>
             </div>
             <div className="rc-hero__foot">
               <p><span className="rc-hero__foot-dot" /> Designed for care teams</p>
@@ -245,9 +246,9 @@ export default function LandingPage() {
               <div className="rc-team__intro">
                 <div>
                   <p className="rc-eyebrow rc-eyebrow--dark"><span className="rc-eyebrow__line" /> The people behind RefConnect</p>
-                  <h2 id="rc-team-title">Meet the team.</h2>
+                  <h2 id="rc-team-title">Meet the founders.</h2>
                 </div>
-                <p>Two co-founders working toward clearer referral pathways.</p>
+                <p>Osinusi and Morayo are building clearer referral pathways with care teams in mind.</p>
               </div>
               <ul className="rc-team__grid">
                 {TEAM.map(person => (
@@ -271,9 +272,8 @@ export default function LandingPage() {
             </a>
             <p>Clearer pathways for complex care. A referral workflow in development for clinical teams in Nigeria.</p>
           </div>
-          <div className="rc-footer__column"><h2>Explore</h2><a href="#intro">Introduction</a><a href="#find">Procedure finder</a><a href="#about">Our purpose</a></div>
-          <div className="rc-footer__column"><h2>Platform</h2><a href="#find">Choose a procedure</a><Link href="/admin">Admin portal</Link><a href="#about">The team</a></div>
-          <div className="rc-footer__column"><h2>Access</h2><p>Sign in with a verified Google account to use hospital search. Administrator access is granted separately.</p></div>
+          <div className="rc-footer__column"><h2>Explore</h2><a href="#find">Procedure finder</a><a href="#about">Our purpose and founders</a></div>
+          <div className="rc-footer__column"><h2>Access</h2><Link href="/admin">Admin portal</Link><p>Sign in with a verified Google account to use hospital search. Administrator access is granted separately.</p></div>
         </div>
         <div className="rc-footer__bottom"><span>© {new Date().getFullYear()} RefConnect</span><span>Designed for clearer care pathways.</span><a href="#intro">Back to top ↑</a></div>
       </footer>
