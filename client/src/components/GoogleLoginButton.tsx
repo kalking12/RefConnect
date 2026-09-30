@@ -206,7 +206,7 @@ export default function GoogleLoginButton() {
       />
 
       {(loading || submitting) && (
-        <p role="status" className="text-sm leading-6 text-[#496577]">
+        <p role="status" className="text-sm leading-6 text-[#365e53]">
           {submitting
             ? "Signing in… This may take a minute. Please keep this page open."
             : "Loading Google sign-in…"}
@@ -222,7 +222,7 @@ export default function GoogleLoginButton() {
             <button
               type="button"
               onClick={() => setRetryCount(count => count + 1)}
-              className="min-h-11 rounded-full border border-[#b9d9ed] px-4 text-sm font-bold text-[#075e98] hover:bg-[#e5f4fd]"
+              className="min-h-11 rounded-full border border-[#b5d1c6] px-4 text-sm font-bold text-[#1a5d4e] hover:bg-[#edf7f2]"
             >
               Try again
             </button>

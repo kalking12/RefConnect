@@ -28,8 +28,7 @@ export const appRouter = router({
     profiles: protectedProcedure.query(({ ctx }) => listPatientProfiles(ctx.user.id)),
     createReferral: protectedProcedure.input(z.object({
       profileId: z.string().min(1), destinationHospitalId: z.string().min(1), surgeryTypeId: z.string().min(1),
-      requestId: z.uuid(),
-    })).mutation(({ ctx, input }) => createReferral(input.profileId, input.destinationHospitalId, input.surgeryTypeId, ctx.user.id, input.requestId)),
+    })).mutation(({ ctx, input }) => createReferral(input.profileId, input.destinationHospitalId, input.surgeryTypeId, ctx.user.id)),
   }),
   admin: router({
     listUsers: ownerProcedure.query(() => listVerifiedGoogleUsers()),

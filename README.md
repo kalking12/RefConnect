@@ -1,6 +1,6 @@
 # RefConnect
 
-RefConnect is a full-stack hospital-readiness and referral portal. The introduction, procedure finder, and About/founders section are public. Selecting a procedure and choosing **View hospitals** opens the secure search: verified Google accounts sign in before viewing hospital readiness or preparing referrals. The initial administrator and permanent owner is `osinusikalid@gmail.com`.
+RefConnect is a full-stack hospital-readiness and referral portal. The introduction, procedure finder, and About/team section are public. Selecting a procedure and choosing **View hospitals** opens the secure search: verified Google accounts sign in before viewing hospital readiness or preparing referrals. The initial administrator and permanent owner is `osinusikalid@gmail.com`.
 
 This build is a demonstration. The five active hospitals start with
 illustrative capability scores, the wider directory is inactive, and the
@@ -62,14 +62,14 @@ Google accounts start fresh: a matching email on an older Manus account does
 not transfer that account's patient profiles or referral history.
 The first verified Google sign-in creates the user's RefConnect account
 automatically; the same button handles later sign-ins. Visitors can read the
-public introduction, choose a procedure, and read About/founders content without
+public introduction, choose a procedure, and read About/team content without
 signing in. Clicking **View hospitals** keeps the selected procedure in the
 URL, opens the sign-in prompt, then shows protected results after sign-in. The
 administrator link similarly prompts for sign-in, with role authorization
 still checked by the server. Patient profiles, hospital values, and referral
 actions do not mount or load for signed-out visitors.
 
-On the first public landing visit in a browser tab, a 3.2-second RefConnect
+On the first public landing visit in a browser tab, a 4.5-second RefConnect
 welcome animation draws and reveals the brand, then fades into the public
 introduction. It can be skipped and does not repeat during that tab's session.
 Reduced-motion users go directly to the page. A direct secure-search or admin
@@ -77,11 +77,9 @@ link shows its sign-in prompt immediately.
 
 ## Site photography
 
-The public landing uses five optimized rotating hero images, a stable About
-image, and portraits of the two founders, Khalid Osinusi and Morayo Akinbile,
-under `client/public/site/`. The brand mark and clinical clothing have been
-adapted to the blue palette. One hero image is newly generated; the other
-clinical images were adapted from supplied source photos. The two uncaptioned images showing identifiable patients and the
+The public landing uses optimized clinical photos and five supplied team
+portraits under `client/public/site/`, with a slow hero crossfade and a stable
+About image. The two uncaptioned images showing identifiable patients and the
 image naming a specific hospital were deliberately not used. Confirm consent
 and publishing rights for the selected people and clinical images before
 public deployment. The sign-in preview uses the existing public clinician
@@ -92,13 +90,9 @@ including a small SVG favicon.
 
 ## Interface
 
-The public page flows from introduction to procedure selection to About/founders.
-The secure search page immediately ranks hospitals for the procedure chosen on
-the landing page. A direct `/search` visit without a procedure asks the user to
-choose one, and the full selector sits behind **Change procedure** after a
-choice. A fixed comparison pill opens the selected hospitals while scrolling.
-The referral button stays **Prepare referral**; the dialog explains demo and
-availability limits. Its inactive hospital directory is collapsed until
+The public page flows from introduction to procedure selection to About/team.
+The secure search page shows hospital ranking, comparison, and referral
+preparation after sign-in. Its inactive hospital directory is collapsed until
 requested. The administrator portal uses explicit capability
 levels, a hospital profile editor that keeps unsaved drafts when changing
 hospitals, and owner-only account role management. Navigation is available in
@@ -108,15 +102,10 @@ lists are shown directly in the relevant screen.
 The app shows an offline notice and retries read requests once. A stalled
 read request times out after 90 seconds so its screen can show a retry option.
 Sign-in, current hospital data, and saving changes require a connection.
-Writes are not automatically retried. If a referral response is lost, the
-**Try again** action reuses the same user-scoped request ID and the server
-reconciles an existing record before inserting; the same attempt cannot be
-reused for a different profile, hospital, or procedure. Repeated failure asks
-an administrator to check its status. Administrator changes still require
-status verification after an uncertain response. Patient and referral
-information is not cached for offline use; the browser keeps a referral
-operation ID indexed by the selected record IDs in tab session storage until
-confirmation, without names or clinical details.
+Writes are not automatically retried or stopped after a client timeout: the
+server may have saved them even if the reply was lost. If a referral or
+administrator change cannot be confirmed, verify its status before trying
+again. Patient and referral information is not cached for offline use.
 
 ## Android APK integration
 

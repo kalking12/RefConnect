@@ -84,21 +84,21 @@ export function AdminRoleManagement() {
 
   return (
     <section
-      className="surface-shadow mb-6 overflow-hidden rounded-2xl border border-border bg-card"
+      className="surface-shadow mb-6 overflow-hidden rounded-2xl border border-[#d7e4df] bg-white"
       aria-labelledby="role-management-title"
     >
-      <div className="flex flex-col gap-4 border-b border-border px-5 py-5 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-4 border-b border-[#e6eeeb] px-5 py-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="font-mono text-xs font-bold uppercase tracking-[0.12em] text-primary">
+          <p className="font-mono text-xs font-bold uppercase tracking-[0.12em] text-[#0b746b]">
             Owner controls
           </p>
           <h2
             id="role-management-title"
-            className="mt-2 font-display text-2xl text-foreground"
+            className="mt-2 font-display text-2xl text-[#1c4038]"
           >
             Administrator roles
           </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#496b60]">
             Grant access to edit hospital values after a person signs in with a
             verified Google account. Only the owner can change roles.
           </p>
@@ -107,14 +107,14 @@ export function AdminRoleManagement() {
           <span className="sr-only">Search accounts by name or email</span>
           <Search
             aria-hidden="true"
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#759187]"
           />
           <Input
             type="search"
             value={search}
             onChange={event => setSearch(event.target.value)}
             placeholder="Search accounts"
-            className="h-11 border-input pl-9"
+            className="h-11 border-[#d5e4de] pl-9"
           />
         </label>
       </div>
@@ -135,7 +135,7 @@ export function AdminRoleManagement() {
         </p>
       )}
       {usersQuery.isPending ? (
-        <p className="px-5 py-6 text-sm text-muted-foreground" role="status">
+        <p className="px-5 py-6 text-sm text-[#496b60]" role="status">
           {usersQuery.isPaused
             ? "Waiting for a connection to load accounts."
             : "Loading accounts…"}
@@ -149,7 +149,7 @@ export function AdminRoleManagement() {
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="inline-flex min-h-11 items-center font-bold underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="inline-flex min-h-11 items-center font-bold underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0b746b]"
             >
               Refresh page
             </button>
@@ -157,38 +157,38 @@ export function AdminRoleManagement() {
             <button
               type="button"
               onClick={() => usersQuery.refetch()}
-              className="inline-flex min-h-11 items-center font-bold underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="inline-flex min-h-11 items-center font-bold underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0b746b]"
             >
               Try again
             </button>
           )}
         </div>
       ) : !users.length ? (
-        <p className="px-5 py-6 text-sm text-muted-foreground">
+        <p className="px-5 py-6 text-sm text-[#496b60]">
           {search
             ? "No accounts match that search."
             : "No verified accounts have signed in yet."}
         </p>
       ) : (
-        <ul className="divide-y divide-border">
+        <ul className="divide-y divide-[#edf2ef]">
           {users.map(account => (
             <li
               key={account.id}
               className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="min-w-0">
-                <p className="truncate text-sm font-bold text-foreground">
+                <p className="truncate text-sm font-bold text-[#244940]">
                   {account.name || account.email || `Account ${account.id}`}
                 </p>
                 {account.name && (
-                  <p className="truncate text-sm text-muted-foreground">
+                  <p className="truncate text-sm text-[#496b60]">
                     {account.email}
                   </p>
                 )}
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 <span
-                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${account.isOwner ? "bg-secondary text-primary dark:bg-secondary" : account.role === "admin" ? "bg-secondary text-primary dark:bg-secondary" : "bg-muted text-muted-foreground dark:bg-muted"}`}
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${account.isOwner ? "bg-[#e1f4ec] text-[#176552] dark:bg-[#203a33]" : account.role === "admin" ? "bg-[#e9f3f5] text-[#2a6974] dark:bg-[#1c3540]" : "bg-[#f1f5f2] text-[#496b60] dark:bg-[#26312d]"}`}
                 >
                   {account.isOwner && (
                     <ShieldCheck aria-hidden="true" className="h-3.5 w-3.5" />
@@ -200,7 +200,7 @@ export function AdminRoleManagement() {
                       : "Member"}
                 </span>
                 {account.isOwner ? (
-                  <span className="w-[140px] text-center text-sm text-muted-foreground">
+                  <span className="w-[140px] text-center text-sm text-[#496b60]">
                     Protected account
                   </span>
                 ) : (
@@ -208,7 +208,7 @@ export function AdminRoleManagement() {
                     type="button"
                     variant="outline"
                     aria-label={`${account.role === "admin" ? "Remove admin from" : "Make admin"} ${account.name || account.email || `Account ${account.id}`}`}
-                    className="min-h-11 w-[140px] border-input text-sm text-primary"
+                    className="min-h-11 w-[140px] border-[#c8ded5] text-sm text-[#28594d]"
                     onClick={() => {
                       setError("");
                       setPendingChange({
@@ -237,7 +237,7 @@ export function AdminRoleManagement() {
       >
         <DialogContent>
           <DialogHeader>
-            <div className="mb-1 flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-primary dark:bg-secondary">
+            <div className="mb-1 flex h-10 w-10 items-center justify-center rounded-full bg-[#e8f5ee] text-[#176552] dark:bg-[#203a33]">
               <UserRoundCog aria-hidden="true" className="h-5 w-5" />
             </div>
             <DialogTitle>
@@ -277,7 +277,7 @@ export function AdminRoleManagement() {
               type="button"
               disabled={setUserAdmin.isPending}
               onClick={confirmChange}
-              className="min-h-11 bg-primary text-primary-foreground hover:bg-primary/90"
+              className="min-h-11 bg-[#0b746b] text-white hover:bg-[#075d57]"
             >
               {setUserAdmin.isPending
                 ? "Saving…"

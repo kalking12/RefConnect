@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 
 // Keep this in sync with the welcome-dissolve animation in index.css.
-const INTRO_DURATION_MS = 3200;
+const INTRO_DURATION_MS = 4500;
 
 type WelcomeIntroProps = {
   onComplete: () => void;
